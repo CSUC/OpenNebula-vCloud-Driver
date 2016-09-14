@@ -42,11 +42,9 @@ More info:
 
 ## Authors
 
-CSUC - Consorci de Serveis Universitaris de Catalunya
+Miguel Ángel Flores (miguel.angel.flores@csuc.cat), Xavier Peralta (xavier.peralta@csuc.cat), Arnau Colominas (arnau.colominas@csuc.cat)
 
-* [http://www.csuc.cat] (http://www.csuc.cat)
-* [CSUC GitHub] (https://github.com/CSUC)
-
+[CSUC - Consorci de Serveis Universitaris de Catalunya] (http://www.csuc.cat)
 
 ## Compatibility
 

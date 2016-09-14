@@ -10,3 +10,7 @@
     * Hot-attach and detach NICs to VM's (To detach NICs is necessary to reboot the VM).
     * Automatized customization of the VMs instanciated. The templates must be configured for that.
     * Import networks, hosts, templates and datastores hosted in vCloud using onevcloud script.
+
+TODO
+	* Attach and detach Hard Disks to VM's
+	* Configure vShield firewall filtering VM's ports during the instanciation and the attach/detach NIC's
