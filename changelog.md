@@ -12,5 +12,6 @@
     * Import networks, hosts, templates and datastores hosted in vCloud using onevcloud script.
 
 TODO
-	* Attach and detach Hard Disks to VM's
-	* Configure vShield firewall filtering VM's ports during the instanciation and the attach/detach NIC's
+	* Manual IP addressment. Now, only POOL addressment is supported.
+	* Attach and detach Hard Disks to VM's.
+	* Configure vShield firewall to filter VM's ports during the instanciation and the attach/detach NIC's.

@@ -42,7 +42,7 @@ More info:
 
 ## Authors
 
-Miguel Ángel Flores (miguel.angel.flores@csuc.cat), Xavier Peralta (xavier.peralta@csuc.cat), Arnau Colominas (arnau.colominas@csuc.cat)
+Leaders: Miguel Ángel Flores (miguel.angel.flores@csuc.cat), Xavier Peralta (xavier.peralta@csuc.cat), Arnau Colominas (arnau.colominas@csuc.cat)
 
 [CSUC - Consorci de Serveis Universitaris de Catalunya] (http://www.csuc.cat)
 
@@ -58,8 +58,7 @@ Use [this guide](https://github.com/CSUC/OpenNebula-vCloud-Driver/blob/master/Gu
 
 ## References
 
-* [CSUC] (http://www.csuc.cat)
-* [OpenNebula] (http://opennebula.org/)
+[CSUC] (http://www.csuc.cat)  [OpenNebula] (http://opennebula.org/)
 
 ## License
 
