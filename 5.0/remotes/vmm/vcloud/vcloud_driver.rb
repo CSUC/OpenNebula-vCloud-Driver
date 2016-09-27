@@ -44,20 +44,20 @@ require 'VirtualMachineDriver'
 
 module VCloudDriver
 
-#################################################################################################################
+#######################################################################################################
 # This class represents a VCloud connection and an associated OpenNebula client
 # The connection is associated to the VCloud backing a given OpenNebula host.
 # For the VCloud driver each OpenNebula host represents a VCloud vcd
-#################################################################################################################
+#######################################################################################################
 
 class VCDConnection
 	attr_reader :vcd_connection, :user, :pass, :host, :vdc, :vdc_ci, :org, :org_ci, :one, :one_host
 
-    #############################################################################################################
+    ###################################################################################################
     # Initializr the VCDConnection, and creates an OpenNebula client. The parameters
     # are obtained from the associated OpenNebula host
     # @param hid [Integer] The OpenNebula host id with VCloud attributes
-    #############################################################################################################
+    ###################################################################################################
 	def initialize(hid)
     	initialize_one
 
@@ -92,7 +92,7 @@ class VCDConnection
         initialize_vcd(connection)
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Initialize a connection with vCloud Director. Options
     # @param options[Hash] with:
     #    :user => The vcloud director user
@@ -100,7 +100,7 @@ class VCDConnection
     #    :host => vCloud Director URI
     #    :vdc => Virtual Data Center
     #    :org => Organization
-    #############################################################################################################
+    ###################################################################################################
     def initialize_vcd(user_opts={})
        
         @user = user_opts[:user]
@@ -130,10 +130,10 @@ class VCDConnection
         end
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Initialize a VCDConnection based just on the VCDConnection parameters. 
     # The OpenNebula client is also initilialized
-    #############################################################################################################
+    ###################################################################################################
     def self.new_connection(user_opts)
 
         conn = allocate
@@ -145,9 +145,9 @@ class VCDConnection
         return conn
     end
     
-    #############################################################################################################
+    ###################################################################################################
     # Initialize an OpenNebula connection with the default ONE_AUTH
-    #############################################################################################################
+    ###################################################################################################
     def initialize_one
         begin
             @one   = ::OpenNebula::Client.new()
@@ -174,11 +174,11 @@ class VCDConnection
         return host.first.id
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Obtains the name of the datastore identified by ds_id.
     #  @param   ds_id [String] The ONE identifier for the datastore.
     #  @return        [String] The name of the datastore.
-    #############################################################################################################
+    ###################################################################################################
     def self.find_ds_name(ds_id)
         ds = OpenNebula::Datastore.new_with_id(ds_id)
         rc = ds.info
@@ -187,21 +187,21 @@ class VCDConnection
         return ds.name
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Obtains the VM associated to vApp identified by uuid.
     #  @param    uuid [String] The identifier for the vApp.
     #  @return        [VCloudSdk::Vm] The Vm object.
-    #############################################################################################################
+    ###################################################################################################
     def find_vm_template(uuid)
         vapp = @vdc_ci.find_vapp_by_id(uuid)
         return vapp.vms.first if !vapp.vms.nil?
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Obtains the vApp identified by uuid.
     #  @param    uuid [String] The identifier for the vApp.
     #  @return        [VCloudSdk::Vapp] The Vapp object.
-    #############################################################################################################
+    ###################################################################################################
     def find_vapp(uuid)  
         return @vdc_ci.find_vapp_by_id(uuid)        
     end
@@ -215,39 +215,47 @@ class VCDConnection
         password_64 = Base64.encode64(password).chop
     end
 
-    ######################### Datastore Operations ##############################################################
+    ######################### Datastore Operations ####################################################
 
-    #############################################################################################################
+    ###################################################################################################
     # Create a VirtualDisk
+    # @param img_name [String] name of the image
+    # @param ds_name  [String] name of the datastore on which the VD will be
+    #                         created
+    # @param size     [String] size of the new image in MB
+    # @param adapter_type [String] as described in
+    #   http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.wssdk.apiref.doc/vim.VirtualDiskManager.VirtualDiskAdapterType.html
+    # @param disk_type [String] as described in
+    #   http://pubs.vmware.com/vsphere-60/index.jsp?topic=%2Fcom.vmware.wssdk.apiref.doc%2Fvim.VirtualDiskManager.VirtualDiskType.html
     # @return name of the final image
-    #############################################################################################################
+    ############################################################################
     def create_virtual_disk(img_name, ds_name, size, adapter_type, disk_type)
         #NOT IMPLEMENTED YET
         return true
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Delete a VirtualDisk
     # @param img_name [String] name of the image
     # @param ds_name  [String] name of the datastore where the VD resides
-    #############################################################################################################
+    ###################################################################################################
     def delete_virtual_disk(img_name, ds_name)
         #NOT IMPLEMENTED YET
-        return true              
+        return true        
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Returns Datastore information
     # @param    ds_name [String] name of the datastore
     # @return           [String] monitor information of the DS
-    #############################################################################################################
+    ###################################################################################################
     def monitor_ds(ds_name)
         # Find datastore within datacenter
         ds = vdc_ci.find_storage_profile_by_name(ds_name)            
         
         total_mb    = ds.storage_limit_mb.to_i
         free_mb     = ds.available_storage.to_i
-        used_mb     = ds.storage_used_mb.to_i
+        used_mb     = ds.storage_used_mb.to_i 
 
         "USED_MB=#{used_mb}\nFREE_MB=#{free_mb} \nTOTAL_MB=#{total_mb}"
     end
@@ -264,7 +272,7 @@ class VCloudHost < ::OpenNebula::Host
         @vdc        = client.vdc_ci   	
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Generate an OpenNebula monitor string for this host. 
     #  More info: http://docs.opennebula.org/4.14/integration/infrastructure_integration/devel-im.html
     #  HYPERVISOR   => Name of the hypervisor of the host 
@@ -276,7 +284,7 @@ class VCloudHost < ::OpenNebula::Host
     #  TOTALMEMORY  =>  Maximum memory that could be used for VMs.
     #  FREEMEMORY   =>  Available memory for VMs at that moment, in kilobytes.
     #  USEDMEMORY   =>  Memory used, in kilobytes.
-    #############################################################################################################
+    ###################################################################################################
     def monitor_cluster
 
        	#Load the host systems          
@@ -316,14 +324,14 @@ class VCloudHost < ::OpenNebula::Host
 		str_info << "USEDMEMORY="  << (summary.memory_used.to_i * 1024).to_s
 	end
 
-    #############################################################################################################
+    ###################################################################################################
     # Generate an OpenNebula monitor string for the VMs in this host. 
     #  More info: http://docs.opennebula.org/4.14/integration/infrastructure_integration/devel-im.html
     #  ID           => Name of the hypervisor of the host 
     #  DEPLOY_ID    =>  The vCloud identifier of the vAPP
     #  VM_NAME      =>  The vCloud name of the vApp.
     #  POLL         =>  The information of the vApp (STATE,USED_CPU,USED_MEMORY,IPs,OS,VMTOOLS_VERSION)
-    #############################################################################################################
+    ###################################################################################################
     def monitor_vms
 
         str_info = ""
@@ -353,13 +361,13 @@ class VCloudHost < ::OpenNebula::Host
         return str_info
     end
 
-    #############################################################################################################
+    ###################################################################################################
     #  Creates an OpenNebula host representing a Virtual Data Center in this 
     #  VCloud
     #  @param vdc    [VCloudSdk::VDC] the VDC oject representing Virtual Data Center
     #  @param client [VCDConnection] to create the host
     #  @return In case of success [0, host_id] or [-1, error_msg]
-    #############################################################################################################
+    ###################################################################################################
     def self.to_one(vdc, client)
         one_host = ::OpenNebula::Host.new(::OpenNebula::Host.build_xml,
             client.one)
@@ -380,6 +388,7 @@ class VCloudHost < ::OpenNebula::Host
         template << "VCLOUD_USER=\"#{client.user}\"\n"
         template << "CPU=\"UNLIMITED\"\n" if vdc.resources.cpu_limit.to_i == 0
         template << "MEMORY=\"UNLIMITED\"\n" if vdc.resources.memory_limit.to_i == 0
+        #template << "VNMAD=\"dummy\"\n"
 
         rc = one_host.update(template, false)
 
@@ -406,11 +415,11 @@ class VCloudVm
     POLL_ATTRIBUTE  = VirtualMachineDriver::POLL_ATTRIBUTE
     VM_STATE        = VirtualMachineDriver::VM_STATE
 
-    #############################################################################################################
+    ###################################################################################################
     #  Creates a new VIVm using a RbVmomi::VirtualMachine object
     #    @param client [VCenterClient] client to connect to vCenter
     #    @param vm_vi [RbVmomi::VirtualMachine] it will be used if not nil
-    #############################################################################################################
+    ###################################################################################################
     def initialize(client, vm_vi )
         @vm     = vm_vi
         @client = client
@@ -422,9 +431,9 @@ class VCloudVm
         @nettx = 0
     end
 
-    #############################################################################################################
+    ###################################################################################################
     #  Initialize the vm monitor information
-    #############################################################################################################
+    ###################################################################################################
     def monitor  
         @state   = state_to_c(@vm.status)
 
@@ -455,7 +464,7 @@ class VCloudVm
 
     end
 
-    #############################################################################################################
+    ###################################################################################################
     #  Generates a OpenNebula IM Driver valid string with the monitor info for this VM.
     #   More info: http://docs.opennebula.org/4.14/integration/infrastructure_integration/devel-vmm.html
     #   GUEST_IP        => The IP or IPs assigned to this VM.
@@ -466,7 +475,7 @@ class VCloudVm
     #   NETTX           => NOT AVAILABLE (0)
     #   OS              => The OS installed on the VM.
     #   VMTOOLS_VERSION => The vmtools version installed on the VM
-    #############################################################################################################
+    ###################################################################################################
     def info
       return 'STATE=d' if @state == 'd'
 
@@ -486,13 +495,13 @@ class VCloudVm
       str_info << "VMWARETOOLS_VERSION="        << @vmtools_ver.to_s     << " "
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Deploys a vApp
     #  @param xml_text  [String] XML representation of the vApp
     #  @param lcm_state [String] 
     #  @param deploy_id [String]
     #  @param hostname  [String]
-    #############################################################################################################
+    ###################################################################################################
     def self.deploy(xml_text, lcm_state, deploy_id, hostname)
         if lcm_state == "BOOT" || lcm_state == "BOOT_FAILURE"                      
             return clone_vm(xml_text, hostname)
@@ -509,33 +518,25 @@ class VCloudVm
         end
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Cancels a VM
     #  @param deploy_id vcloud identifier of the VM
     #  @param hostname name of the host (equals the vCloud VDC)
     #  @param lcm_state state of the VM
     #  @param keep_disks keep or not VM disks in datastore
     #  @param disks VM attached disks
-    #############################################################################################################   
-    def self.cancel(deploy_id, hostname, lcm_state, keep_disks)        
+    ###################################################################################################   
+    def self.cancel(deploy_id, hostname, lcm_state, keep_disks)     
         case lcm_state
-            when "SHUTDOWN","SHUTDOWN_POWEROFF", "SHUTDOWN_UNDEPLOY"
+            when "SHUTDOWN_POWEROFF", "SHUTDOWN_UNDEPLOY"
                 shutdown(deploy_id, hostname, lcm_state, keep_disks)
-            when "CANCEL", "LCM_INIT", "CLEANUP_RESUBMIT", "SHUTDOWN", "CLEANUP_DELETE"
+            when "CANCEL", "LCM_INIT", "CLEANUP_RESUBMIT", "SHUTDOWN", "CLEANUP_DELETE", "EPILOG"
+  
                 hid         = VCDConnection::translate_hostname(hostname) 
                 connection  = VCDConnection.new(hid)
-                vapp        = connection.find_vapp(deploy_id) 
-
-                begin                    
-                    if vapp.status == "POWERED_ON"                                                
-                        vapp.power_off
-                    end
-                rescue
-                end
-
-                ips = vapp.vms.first.ip_address           
-
-                connection.vdc_ci.edge_gateways.first.remove_fw_rules(ips) if !ips.nil?
+                vapp        = connection.find_vapp(deploy_id)                               
+                                                                
+                vapp.power_off if vapp.status == "POWERED_ON"              
 
                 vapp.delete
             else 
@@ -544,11 +545,11 @@ class VCloudVm
 
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Reboots a vApp
     #  @param deploy_id vcloud identifier of the vApp
     #  @param hostname name of the host (equals the vCloud VDC)
-    #############################################################################################################
+    ###################################################################################################
     def self.reboot(deploy_id, hostname)
         hid         = VCDConnection::translate_hostname(hostname) 
         connection  = VCDConnection.new(hid)  
@@ -557,11 +558,11 @@ class VCloudVm
         vapp.reboot
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Resets a vApp
     #  @param deploy_id vcloud identifier of the vApp
     #  @param hostname name of the host (equals the vCloud VDC)
-    #############################################################################################################
+    ###################################################################################################
     def self.reset(deploy_id, hostname)
         hid         = VCDConnection::translate_hostname(hostname) 
         connection  = VCDConnection.new(hid)  
@@ -570,11 +571,11 @@ class VCloudVm
         vapp.reset
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Resumes a vApp
     #  @param deploy_id vcloud identifier of the vApp
     #  @param hostname name of the host (equals the vCloud VDC)
-    #############################################################################################################
+    ###################################################################################################
     def self.resume(deploy_id, hostname)   
         hid         = VCDConnection::translate_hostname(hostname) 
         connection  = VCDConnection.new(hid)  
@@ -583,11 +584,11 @@ class VCloudVm
         vapp.power_on
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Saves a vApp
     #  @param deploy_id vcloud identifier of the vApp
     #  @param hostname name of the host (equals the vCloud VDC)
-    #############################################################################################################
+    ###################################################################################################
     def self.save(deploy_id, hostname, lcm_state)
         case lcm_state
             when "SAVE_MIGRATE"
@@ -601,11 +602,11 @@ class VCloudVm
         end
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Shutdown a vApp
     #  @param deploy_id vCloud identifier of the vApp
     #  @param hostname name of the host (equals the vCloud VDC)
-    #############################################################################################################
+    ###################################################################################################
     def self.shutdown(deploy_id, hostname, lcm_state, keep_disks)
 
         hid         = VCDConnection::translate_hostname(hostname) 
@@ -614,13 +615,9 @@ class VCloudVm
         vapp        = connection.find_vapp(deploy_id) 
 
         case lcm_state
-            when "SHUTDOWN"   
-                ips = vapp.vms.first.ip_address
-
+            when "SHUTDOWN"                
                 vapp.shutdown if vapp.vms.first.vmtools_version != "9227"                                             
-                vapp.power_off                
-
-                connection.vdc_ci.edge_gateways.first.remove_fw_rules(ips) if !ips.nil?
+                vapp.power_off
 
                 vapp.delete                                
                 
@@ -630,12 +627,12 @@ class VCloudVm
         end
     end   
 
-    #############################################################################################################
+    ###################################################################################################
     # Create vApp snapshot
     #  @param deploy_id vcloud identifier of the vApp
     #  @param hostname name of the host (equals the vCloud VDC)
     #  @param snaphot_name name of the snapshot
-    #############################################################################################################
+    ###################################################################################################
     def self.create_snapshot(deploy_id, hostname, snapshot_name)
         hid         = VCDConnection::translate_hostname(hostname)
         connection  = VCDConnection.new(hid)
@@ -651,11 +648,11 @@ class VCloudVm
         return snapshot_name
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Delete ALL vApp snapshots
     #  @param deploy_id     vcloud identifier of the vApp
     #  @param hostname      name of the host (equals the vCloud VDC)
-    #############################################################################################################
+    ###################################################################################################
     def self.delete_snapshot(deploy_id, hostname)
         hid         = VCDConnection::translate_hostname(hostname)
         connection  = VCDConnection.new(hid)
@@ -664,11 +661,11 @@ class VCloudVm
         vapp.remove_snapshot
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Revert the LAST vApp snapshot
     #  @param deploy_id vcloud identifier of the vApp
     #  @param hostname name of the host (equals the vCloud VDC)
-    #############################################################################################################
+    ###################################################################################################
     def self.revert_snapshot(deploy_id, hostname)        
         hid         = VCDConnection::translate_hostname(hostname)
         connection  = VCDConnection.new(hid)
@@ -677,19 +674,21 @@ class VCloudVm
         vapp.revert_snapshot
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Attach NIC to a VM
     #  If VMware tools are installed, we can attach NIC in a powered on VM.
     #  @param deploy_id     vCloud identifier of the VM
     #  @param mac           Optional.MAC address of the NIC to be attached
     #  @param bridge        The name of the Network in vCloud
     #  @param hostname      Name of the host (equals the vCloud VDC)
-    #############################################################################################################
-    def self.attach_nic(deploy_id, mac, bridge, hostname)        
+    ###################################################################################################
+    def self.attach_nic(deploy_id, mac, bridge, hostname,vm_id)        
         hid         = VCDConnection::translate_hostname(hostname)
         connection  = VCDConnection.new(hid)
         vapp        = connection.find_vapp(deploy_id)
         vm          = vapp.vms.first
+        vm_one      = OpenNebula::VirtualMachine.new_with_id(vm_id,connection.one)
+        vm_one.info
 
         #Add network "bridge" to vApp                                                    
         vapp.add_network_by_name(bridge) if !vapp.list_networks.include? "#{bridge}"        
@@ -698,10 +697,10 @@ class VCloudVm
         vm.add_nic(bridge,"POOL",mac)
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Detach NIC from a VM.
     #  To detach NICs the VM must be POWERED OFF.
-    #############################################################################################################
+    ###################################################################################################
     def self.detach_nic(deploy_id, mac, hostname)        
         hid         = VCDConnection::translate_hostname(hostname)
         connection  = VCDConnection.new(hid)
@@ -725,14 +724,13 @@ class VCloudVm
         end
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Reconfigures a VM (context data)
     #  @param deploy_id vcloud identifier of the VM
     #  @param hostname name of the host (equals the vCloud VDC)
     #  @param xml_text XML repsentation of the VM
-    #############################################################################################################
+    ###################################################################################################
     def self.reconfigure(deploy_id, hostname, xml_text)
-        return true
         hid         = VCDConnection::translate_hostname(hostname)
         connection  = VCDConnection.new(hid)
         vapp        = connection.find_vapp(deploy_id)
@@ -746,15 +744,15 @@ class VCloudVm
         end
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Converts a vCloud vApp template object to a ONE template.
     #  @param template     [VCloudSdk::Catalog_Item] The template object.
     #  @param catalog_name [String] The name of the template's catalog.
     #  @return             [String] The ONE template data.
-    #############################################################################################################
+    ###################################################################################################
     def self.to_one(template,catalog_name)
         
-        operating_system = "OTHER"
+        operating_system = "UNKNOWN"
         operating_system = "LINUX" if template.name.downcase.include? "linux"
         operating_system = "WINDOWS" if template.name.downcase.include? "windows"
 
@@ -767,12 +765,13 @@ class VCloudVm
         str <<  "  CUSTOMIZE = \"YES\",\n" 
         str <<  "  HOSTNAME = \"cloud-$UNAME\",\n"                            
         str <<  "  USERNAME = \"$UNAME\",\n"        
-        str <<  "  PASSWORD = \"$USER[PASS_WIN]\",\n"       
+        str <<  "  PASSWORD = \"$USER[PASS_WIN]\",\n"     
         str <<  "  PASSWORD = \"$USER[PASS]\",\n"
         str <<  "  ROOT_PASS = \"$USER[ROOT_PASS]\",\n"                                  
         str <<  "  NETWORK = \"YES\",\n"   
-        str <<  "  SSH_PUBLIC_KEY = \"$USER[SSH_PUBLIC_KEY]\",\n"    
+        str <<  "  SSH_PUBLIC_KEY = \"$USER[SSH_PUBLIC_KEY]\",\n"     
         str <<  "  OS = \"#{operating_system}\",\n"
+        str <<  "  WHITE_TCP_PORTS = \"22,80\"\n"  
         str <<  "]\n"                  
         str <<  "PUBLIC_CLOUD = [\n"
         str <<  "  TYPE        =\"vcloud\",\n"
@@ -792,9 +791,9 @@ class VCloudVm
 
     private
          
-    #############################################################################################################
+    ###################################################################################################
     #  Clone a vCloud vApp Template and leaves it powered on
-    #############################################################################################################
+    ###################################################################################################
     def self.clone_vm(xml_text, hostname)
 
         xml = REXML::Document.new xml_text        
@@ -847,28 +846,33 @@ class VCloudVm
         return vapp.id
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Converts the VM's xml especification to a hash.
     #  @param   xml [XML]   The ONE especification for the VM.
     #  @return      [Hash]  The Hash especification for the VM.
-    #############################################################################################################
+    ###################################################################################################
     def self.hash_spec_vm(xml)
 
         id            = xml.root.elements["/VM/ID"].text
         name          = xml.root.elements["/VM/NAME"].text
         vm_name       = "vm-one-#{id}-#{name}"
         cpu           = xml.root.elements["/VM/TEMPLATE/CPU"] ? xml.root.elements["/VM/TEMPLATE/CPU"].text : 1
-        memory        = xml.root.elements["/VM/TEMPLATE/MEMORY"].text
+        memory        = xml.root.elements["/VM/TEMPLATE/MEMORY"] ? xml.root.elements["/VM/TEMPLATE/MEMORY"].text : 1024
         description   = "VM of one-#{id}-#{name}"    
 
         #NETWORK SECTION
+
         array_nics    = []   
         nics          = xml.root.get_elements("/VM/TEMPLATE/NIC")        
         
         if !nics.nil?
             nics.each { |nic|
+        
+                ip_add = nic.elements["IP"].nil? ? nil : nic.elements["IP"].text
+
                 nic_opt = {
                         :network_name =>  nic.elements["NETWORK"].text,
+                        :ip           =>  ip_add,
                         :mac          =>  nic.elements["MAC"].text
                 }
                 array_nics.push(nic_opt)
@@ -882,19 +886,20 @@ class VCloudVm
             :vcpu => cpu,
             :memory => memory,
             :nics => array_nics,
+            #:disks => array_disks,
             :vapp_name => "one-#{id}-#{name}"            
         }
         return hash_spec          
-    end 
+    end  
 
-    #############################################################################################################
+    ###################################################################################################
     # Reconfigures a vApp with new deployment description
-    #############################################################################################################
+    ###################################################################################################
     def self.reconfigure_vm(vapp, xml, newvm, hostname)
         vm = vapp.vms.first
 
         if !newvm
-            #SNAPSHOT SECTION (we have to remove the snapshots before reconfigure the vm)
+            #SNAPSHOT SECTION (we need to remove the snapshots before reconfigure the vm)
             vapp.remove_snapshot if vapp.snapshot_info 
         end
 
@@ -905,15 +910,14 @@ class VCloudVm
             if customize == "YES"
                 hostname        = xml.root.elements["/VM/TEMPLATE/CONTEXT/HOSTNAME"].text
                 root_pass       = xml.root.elements["/VM/TEMPLATE/CONTEXT/ROOT_PASS"].text
-                context         = xml.root.elements["/VM/TEMPLATE/CONTEXT"]                
+                context         = xml.root.elements["/VM/TEMPLATE/CONTEXT"]
 
                 script          = custom_script(context)
 
                 if !xml.root.elements["/VM/TEMPLATE/CONTEXT/START_SCRIPT"].nil?
                     script = xml.root.elements["/VM/TEMPLATE/CONTEXT/START_SCRIPT"].text
                 end
-
-
+  
                 opts            = {
                                 :computer_name => hostname,
                                 :admin_pass => root_pass,
@@ -926,10 +930,11 @@ class VCloudVm
 
         #RECONFIGURE SECTION        
         options_vm = hash_spec_vm(xml)
+
         vm.reconfigure(options_vm)                
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Attach disk to a VM
     # @params hostname[String] vcenter cluster name in opennebula as host
     # @params deploy_id[String] deploy id of the vm
@@ -938,51 +943,51 @@ class VCloudVm
     # @params size_kb[String] size in kb of the disk
     # @params vm[RbVmomi::VIM::VirtualMachine] VM if called from instance
     # @params connection[ViClient::conneciton] connection if called from instance
-    #############################################################################################################
+    ###################################################################################################
     def self.attach_disk(hostname, deploy_id, ds_name,img_name, size_mb, vapp=nil, connection=nil)
         #NOT IMPLEMENTED YET
-        return true    
+        return true
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Detach a specific disk from a VM
     # Attach disk to a VM
     # @params hostname  [String] vcenter cluster name in opennebula as host
     # @params deploy_id [String] deploy id of the vm
     # @params ds_name   [String] name of the datastore
     # @params img_path  [String] path of the image
-    #############################################################################################################
+    ###################################################################################################
     def self.detach_disk(hostname, deploy_id, ds_name, img_path)
         #NOT IMPLEMENTED YET
         return true
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Detach all disks from a VM
     # @params vm[VCenterVm] vCenter VM
-    #############################################################################################################
+    ###################################################################################################
     def self.detach_all_disks(vm)
         #NOT IMPLEMENTED YET
         return true
     end
 
-    #############################################################################################################
+    ###################################################################################################
     # Detach attached disks from a VM
-    #############################################################################################################
+    ###################################################################################################
     def self.detach_attached_disks(vm, disks, hostname)
         #NOT IMPLEMENTED YET
         return true
     end
     
-    #############################################################################################################
+    ###################################################################################################
     # Obtains the customization script for the Virtual Machine
     #  @params context [XML] The ONE template's context
     #  @return         [String] The customization script
-    #############################################################################################################
+    ###################################################################################################
     def self.custom_script(context)
 
          user_pubkey = context.elements["SSH_PUBLIC_KEY"].text if !context.elements["SSH_PUBLIC_KEY"].nil? 
-         username    = context.elements["USERNAME"].text if !context.elements["USERNAME"].nil? 
+         username    = context.elements["USERNAME"].text
          password    = context.elements["PASSWORD"].text  if !context.elements["PASSWORD"].nil? 
          os          = context.elements["OS"].text.downcase
 
@@ -1012,22 +1017,22 @@ class VCloudVm
             script = "@echo off\n"
             script << "if \"%1%\" == \"precustomization\" (\n"
             script << "  echo \"Do precustomization tasks\"\n"
+            #script << "  net user Administrator /logonpasswordchg:NO\n"
             script << ") else if \"%1%\" == \"postcustomization\" (\n"
-            script << "  echo \"Do postcustomization tasks\"\n"           
+            script << "  echo \"Do postcustomization tasks\"\n"
+            #script << "  net user Administrator /logonpasswordchg:NO\n"            
             script << "  net user Administrator Abc123.\n"
-
             if !password.nil?
                 script << "  net user #{username} #{password} /add\n"
                 script << "  net localgroup administrators #{username} /add\n"
-            end 
-
+            end            
             script << ")\n"       
         else
             nil
         end
     end
     
-    #############################################################################################################
+    ###################################################################################################
     # Converts the vCloud string state to OpenNebula state convention
     #  @param state [String] The states could be "POWERED ON", "SUSPENDED"
     #                        "POWERED_OFF"
@@ -1043,7 +1048,7 @@ class VCloudVm
     # - 7          The vApp is currently UNRECOGNIZED.
     # - 8          The vApp is currently POWERED_OFF.
     # - other        The vApp is in other state.
-    #############################################################################################################
+    ###################################################################################################
     def state_to_c(state)
      
         case state
@@ -1059,5 +1064,5 @@ class VCloudVm
     end    
 
 end
-#################################################################################################################
+#######################################################################################################
 end

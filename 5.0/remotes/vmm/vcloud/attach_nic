@@ -31,12 +31,14 @@ deploy_id = ARGV[0]
 mac       = ARGV[1]
 bridge    = ARGV[2]
 hostname  = ARGV[-1]
+vm_id 	  = ARGV[6]
 
 begin
     VCloudDriver::VCloudVm.attach_nic(deploy_id,
                                         mac,
                                         bridge,
-                                        hostname)
+                                        hostname,
+                                        vm_id)
 rescue Exception => e
     STDERR.puts "Attach NIC for VM #{deploy_id} on host #{hostname} failed " +
                 "due to \"#{e.message}\""

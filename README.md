@@ -20,6 +20,7 @@ This addon has the following capabilities:
 
 * Deploy, stop, shutdown, reboot, save, suspend, resume and delete VM's in the Virtual Data Centers hosted in vCloud.
 * Create, delete and revert snapshots of VM's.
+* Change RAM and CPU values of VM.
 * It's able to hot-attach and detach NICs to VM's.
 * Automatized customization of the VMs instanciated.
 * Obtain monitoring information from the VDC, Datastore and VM's.
