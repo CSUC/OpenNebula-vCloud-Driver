@@ -388,7 +388,6 @@ class VCloudHost < ::OpenNebula::Host
         template << "VCLOUD_USER=\"#{client.user}\"\n"
         template << "CPU=\"UNLIMITED\"\n" if vdc.resources.cpu_limit.to_i == 0
         template << "MEMORY=\"UNLIMITED\"\n" if vdc.resources.memory_limit.to_i == 0
-        #template << "VNMAD=\"dummy\"\n"
 
         rc = one_host.update(template, false)
 
@@ -530,7 +529,7 @@ class VCloudVm
         case lcm_state
             when "SHUTDOWN_POWEROFF", "SHUTDOWN_UNDEPLOY"
                 shutdown(deploy_id, hostname, lcm_state, keep_disks)
-            when "CANCEL", "LCM_INIT", "CLEANUP_RESUBMIT", "SHUTDOWN", "CLEANUP_DELETE", "EPILOG"
+            when "CANCEL", "LCM_INIT", "CLEANUP_RESUBMIT", "SHUTDOWN", "CLEANUP_DELETE"
   
                 hid         = VCDConnection::translate_hostname(hostname) 
                 connection  = VCDConnection.new(hid)
@@ -886,7 +885,6 @@ class VCloudVm
             :vcpu => cpu,
             :memory => memory,
             :nics => array_nics,
-            #:disks => array_disks,
             :vapp_name => "one-#{id}-#{name}"            
         }
         return hash_spec          
@@ -1017,11 +1015,9 @@ class VCloudVm
             script = "@echo off\n"
             script << "if \"%1%\" == \"precustomization\" (\n"
             script << "  echo \"Do precustomization tasks\"\n"
-            #script << "  net user Administrator /logonpasswordchg:NO\n"
             script << ") else if \"%1%\" == \"postcustomization\" (\n"
             script << "  echo \"Do postcustomization tasks\"\n"
-            #script << "  net user Administrator /logonpasswordchg:NO\n"            
-            script << "  net user Administrator Abc123.\n"
+            script << "  net user Administrator /logonpasswordchg:NO\n"            
             if !password.nil?
                 script << "  net user #{username} #{password} /add\n"
                 script << "  net localgroup administrators #{username} /add\n"
