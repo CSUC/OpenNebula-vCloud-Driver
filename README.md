@@ -39,7 +39,7 @@ More info:
 * [How to Contribute] (http://opennebula.org/software:addons#how_to_contribute_to_an_existing_add-on) 
 * Support: [OpenNebula user forum](https://forum.opennebula.org/c/support)
 * Development: [OpenNebula developers forum](https://forum.opennebula.org/c/development)
-* Issues Tracking: [Github issues] (https://github.com/CSUC/OpenNebula-vCloud-Driver/issues)
+* Issues Tracking: [Github issues] (https://github.com/OpenNebula/addon-vcloud-driver/issues)
 
 ## Authors
 
@@ -63,4 +63,4 @@ Use [this guide](https://github.com/CSUC/OpenNebula-vCloud-Driver/blob/master/Gu
 
 ## License
 
-[Apache 2.0] (https://github.com/CSUC/OpenNebula-vCloud-Driver/blob/master/LICENSE)
+[Apache 2.0] (https://github.com/OpenNebula/addon-vcloud-driver/blob/master/LICENSE)
