@@ -55,7 +55,7 @@ frontend installed on Ubuntu 14.04.
 
 ## Installation, Configuration and Usage
 
-Use [this guide](https://github.com/CSUC/OpenNebula-vCloud-Driver/blob/master/Guide.md)
+Use [this guide](Guide.md)
 
 ## References
 
@@ -63,4 +63,4 @@ Use [this guide](https://github.com/CSUC/OpenNebula-vCloud-Driver/blob/master/Gu
 
 ## License
 
-[Apache 2.0] (https://github.com/OpenNebula/addon-vcloud-driver/blob/master/LICENSE)
+[Apache 2.0] (LICENSE)
