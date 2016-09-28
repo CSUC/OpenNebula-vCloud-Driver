@@ -30,7 +30,7 @@
     - 5.0/remotes/vmm/vcloud 				  	-> /var/lib/one/remotes/vmm/
     - 5.0/remotes/im/vloud.d 					-> /var/lib/one/remotes/im/
     - 5.0/remotes/datastore/vcloud 				-> /var/lib/one/datastore
-    - 5.0/remotes/hooks         -> /var/lib/one/remotes/hooks
+    - 5.0/remotes/hooks/dv            -> /var/lib/one/remotes/hooks
     - 5.0/remotes/vmm/vcloud/vcloud_driver.rb 	-> /usr/lib/one/ruby
 
 ### 2.Change permissions and owner:
