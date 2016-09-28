@@ -30,13 +30,14 @@
     - 5.0/remotes/vmm/vcloud 				  	-> /var/lib/one/remotes/vmm/
     - 5.0/remotes/im/vloud.d 					-> /var/lib/one/remotes/im/
     - 5.0/remotes/datastore/vcloud 				-> /var/lib/one/datastore
+    - 5.0/remotes/hooks/dv             -> /var/lib/one/remotes/hooks
     - 5.0/remotes/vmm/vcloud/vcloud_driver.rb 	-> /usr/lib/one/ruby
 
 ### 2.Change permissions and owner:
 
- 	 chown -R oneadmin:oneadmin /var/lib/one/remotes/vmm/vcloud /var/lib/one/remotes/im/vcloud.d /var/lib/one/remotes/datastore/vcloud
+ 	 chown -R oneadmin:oneadmin /var/lib/one/remotes/vmm/vcloud /var/lib/one/remotes/im/vcloud.d /var/lib/one/remotes/datastore/vcloud /var/lib/one/remotes/hooks/dv
 
- 	 chmod -R +x /var/lib/one/remotes/vmm/vcloud /var/lib/one/remotes/im/vcloud.d /var/lib/one/remotes/datastore/vcloud
+ 	 chmod -R +x /var/lib/one/remotes/vmm/vcloud /var/lib/one/remotes/im/vcloud.d /var/lib/one/remotes/datastore/vcloud /var/lib/one/remotes/hooks/dv
 
 ### 3.Modify the /etc/one/oned.conf configuration file adding the following new lines
 
@@ -62,6 +63,19 @@
     		arguments  = "-p -t 15 -r 0 vcloud -s sh",
     		type       = "xml" ]
 		#------------------------------------------------------------------------------
+
+* In HOOK section:
+      
+       #-------------------------------------------------------------------------------
+       #   VMware vCloud Director Hook Manager Configuration
+       #-------------------------------------------------------------------------------
+       VM_HOOK = [
+        name = "delete_poweroff_vms",
+        on = "DONE",
+        command = "dv/delete_poweroff_vms.rb",
+        arguments = "$TEMPLATE" ]
+       #-------------------------------------------------------------------------------
+
 
 * In TM_MAD section:
 
