@@ -30,7 +30,7 @@
     - 5.0/remotes/vmm/vcloud 				  	-> /var/lib/one/remotes/vmm/
     - 5.0/remotes/im/vloud.d 					-> /var/lib/one/remotes/im/
     - 5.0/remotes/datastore/vcloud 				-> /var/lib/one/datastore
-    - 5.0/remotes/hooks/dv             -> /var/lib/one/remotes/hooks
+    - 5.0/remotes/hooks         -> /var/lib/one/remotes/hooks
     - 5.0/remotes/vmm/vcloud/vcloud_driver.rb 	-> /usr/lib/one/ruby
 
 ### 2.Change permissions and owner:
@@ -53,7 +53,7 @@
    		#-------------------------------------------------------------------------------
 
 * In VM_MAD section:
-
+ 
    		 #-------------------------------------------------------------------------------
     	 #  VMware vCloud Director Virtualization Driver Manager Configuration
     	 #-------------------------------------------------------------------------------
@@ -65,7 +65,7 @@
 		#------------------------------------------------------------------------------
 
 * In HOOK section:
-      
+      ```
        #-------------------------------------------------------------------------------
        #   VMware vCloud Director Hook Manager Configuration
        #-------------------------------------------------------------------------------
@@ -75,6 +75,7 @@
         command = "dv/delete_poweroff_vms.rb",
         arguments = "$TEMPLATE" ]
        #-------------------------------------------------------------------------------
+       ```
 
 
 * In TM_MAD section:
@@ -137,14 +138,16 @@ When vCloud Driver is installed correctly, it's time to use onevcloud script to 
 The first step is import to OpenNebula the resources hosted in vCloud using the onevcloud script.
 
 ###Hosts
-
+  ```
   /var/lib/one/remotes/vmm/vcloud/onevcloud hosts --vcloud [vcloud-uri.com] --vuser [user@organization] --vpass [password] --vdc [VDC_name]
+  ```
 
 ![Alt text](picts/vcloud_host.png)
 
 ###Templates
-
+  ```
   /var/lib/one/remotes/vmm/vcloud/onevcloud hosts --vcloud [vcloud-uri.com] --vuser [user@organization] --vpass [password] --vdc [VDC_name]
+  ```
 
 ![Alt text](picts/vcloud_templates.png)
 
@@ -153,7 +156,9 @@ The first step is import to OpenNebula the resources hosted in vCloud using the 
   For the current version, only POOL addressment is supported. OpenNebula generates MAC addresses and passes them to vCloud. 
   For that reason, when you use the script to import networks to OpenNebula you must to choose [E]thernet type network.
 
+  ```
   /var/lib/one/remotes/vmm/vcloud/onevcloud networks --vcloud [vcloud-uri.com] --vuser [user@organization] --vpass [password] --vdc [VDC_name]
+  ```
 
 ![Alt text](picts/vcloud_networks.png)
 
