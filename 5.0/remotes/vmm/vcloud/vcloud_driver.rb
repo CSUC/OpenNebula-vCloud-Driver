@@ -751,7 +751,7 @@ class VCloudVm
     ###################################################################################################
     def self.to_one(template,catalog_name)
         
-        operating_system = "UNKNOWN"
+        operating_system = "OTHER"
         operating_system = "LINUX" if template.name.downcase.include? "linux"
         operating_system = "WINDOWS" if template.name.downcase.include? "windows"
 
@@ -761,7 +761,7 @@ class VCloudVm
         str <<  "HYPERVISOR = \"vcloud\"\n"                     
         str <<  "SCHED_REQUIREMENTS=\"HYPERVISOR=\\\"vcloud\\\"\"\n"
         str <<  "CONTEXT = [\n"
-        str <<  "  CUSTOMIZE = \"YES\",\n" 
+        str <<  "  CUSTOMIZATION = \"NO\",\n" 
         str <<  "  HOSTNAME = \"cloud-$UNAME\",\n"                            
         str <<  "  USERNAME = \"$UNAME\",\n"        
         str <<  "  PASSWORD = \"$USER[PASS_WIN]\",\n"     
@@ -903,19 +903,16 @@ class VCloudVm
 
         if newvm 
             #CUSTOMIZATION SECTION
-            customize       = xml.root.elements["/VM/TEMPLATE/CONTEXT/CUSTOMIZE"].text
+            customization      = xml.root.elements["/VM/TEMPLATE/CONTEXT/CUSTOMIZATION"].text
 
-            if customize == "YES"
+            if customization == "YES" and !xml.root.elements["/VM/TEMPLATE/CONTEXT/ROOT_PASS"].nil?
                 hostname        = xml.root.elements["/VM/TEMPLATE/CONTEXT/HOSTNAME"].text
                 root_pass       = xml.root.elements["/VM/TEMPLATE/CONTEXT/ROOT_PASS"].text
                 context         = xml.root.elements["/VM/TEMPLATE/CONTEXT"]
+                
 
-                script          = custom_script(context)
+                script          = xml.root.elements["/VM/TEMPLATE/CONTEXT/START_SCRIPT"].nil? ? custom_script(context) : xml.root.elements["/VM/TEMPLATE/CONTEXT/START_SCRIPT"].text
 
-                if !xml.root.elements["/VM/TEMPLATE/CONTEXT/START_SCRIPT"].nil?
-                    script = xml.root.elements["/VM/TEMPLATE/CONTEXT/START_SCRIPT"].text
-                end
-  
                 opts            = {
                                 :computer_name => hostname,
                                 :admin_pass => root_pass,
@@ -929,7 +926,7 @@ class VCloudVm
         #RECONFIGURE SECTION        
         options_vm = hash_spec_vm(xml)
 
-        vm.reconfigure(options_vm)                
+        vm.reconfigure(options_vm)                        
     end
 
     ###################################################################################################
