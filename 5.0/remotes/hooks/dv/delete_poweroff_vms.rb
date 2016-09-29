@@ -28,21 +28,22 @@ $: << File.dirname(__FILE__)
 require 'vcloud_driver'
 require 'opennebula'
 
-drv_action_enc = ARGV[0]
+drv_action_enc 	= ARGV[0]
 
-drv_action = OpenNebula::XMLElement.new
+drv_action 	 	= OpenNebula::XMLElement.new
 drv_action.initialize_xml(Base64.decode64(drv_action_enc), 'VM')
 
-deploy_id = drv_action["/VM/DEPLOY_ID"]
-host  	= drv_action["/VM/HISTORY_RECORDS/HISTORY/HOSTNAME"]
+deploy_id 		= drv_action["/VM/DEPLOY_ID"]
+host  			= drv_action["/VM/HISTORY_RECORDS/HISTORY/HOSTNAME"]
+lcm_state_num 	= drv_action["/VM/LCM_STATE"].to_i
+lcm_state 		= OpenNebula::VirtualMachine::LCM_STATE[lcm_state_num]
 
-keep_disks = nil #NOT IMPLEMENTED YET
-lcm_state = "SHUTDOWN"
+keep_disks 		= nil #NOT IMPLEMENTED YET
 
 begin
-    VCloudDriver::VCloudVm.shutdown(deploy_id, host, lcm_state, keep_disks)
+    VCloudDriver::VCloudVm.cancel(deploy_id, host, lcm_state, keep_disks)
 rescue Exception => e
-    STDERR.puts "Shutdown of VM #{deploy_id} on host #{host} failed " +
+    STDERR.puts "Cancel of VM #{deploy_id} on host #{host} failed " +
                 "due to \"#{e.message}\""
     exit -1
 end
