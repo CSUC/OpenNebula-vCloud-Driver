@@ -451,15 +451,15 @@ class VCloudVm
         # Check for negative values
         @used_memory     = 0 if @used_memory.to_i < 0
         @used_cpu        = 0 if @used_cpu.to_i < 0
-
-                
-        @guest_ip_addresses        = @vm.ip_address if !@vm.ip_address.nil?
+      
+        @guest_ip_addresses        = @vm.ip_address.nil? ? "--" : @vm.ip_address
 
         @guest_ip                  = @guest_ip.first  if @guest_ip 
         @guest_ip_addresses        = @guest_ip_addresses.join(',') if !@vm.ip_address.nil?
         
         @os                        = @vm.operating_system.delete(' ')
-        @vmtools_ver               = @vm.vmtools_version          
+        @vmtools_ver               = @vm.vmtools_version
+        @disks                     = @vm.internal_disks
 
     end
 
@@ -490,6 +490,9 @@ class VCloudVm
       str_info << "#{POLL_ATTRIBUTE[:memory]}=" << @used_memory.to_s     << " "
       str_info << "#{POLL_ATTRIBUTE[:netrx]}="  << @netrx.to_s           << " "
       str_info << "#{POLL_ATTRIBUTE[:nettx]}="  << @nettx.to_s           << " "
+      @disks.each do |disk|
+            str_info << "DISK_SIZE=[ ID=#{disk.id}, SIZE=#{disk.capacity} ]" << " "
+        end
       str_info << "OPERATING_SYSTEM="           << @os.to_s              << " " 
       str_info << "VMWARETOOLS_VERSION="        << @vmtools_ver.to_s     << " "
     end
@@ -509,7 +512,7 @@ class VCloudVm
             connection  = VCDConnection.new(hid)
             vapp        = connection.find_vapp(deploy_id)       
             xml         = REXML::Document.new xml_text
-                        
+        
             reconfigure_vm(vapp, xml, false, hostname)
 
             vapp.power_on
@@ -535,7 +538,19 @@ class VCloudVm
                 connection  = VCDConnection.new(hid)
                 vapp        = connection.find_vapp(deploy_id)                               
                                                                 
-                vapp.power_off if vapp.status == "POWERED_ON"              
+                vapp.power_off if vapp.status == "POWERED_ON"
+               
+
+               # NOT IMPLEMENTED YET
+               # if keep_disks
+               #     detach_all_disks(vm)
+               # else
+               #     detach_attached_disks(vm, disks, hostname) if disks
+               # end
+
+                #ips = vapp.vms.first.ip_address           
+
+                #connection.vdc_ci.edge_gateways.first.remove_fw_rules(ips) if !ips.nil?
 
                 vapp.delete
             else 
@@ -617,6 +632,11 @@ class VCloudVm
             when "SHUTDOWN"                
                 vapp.shutdown if vapp.vms.first.vmtools_version != "9227"                                             
                 vapp.power_off
+                #detach_all_disks(vm) if keep_disks
+
+                #ips = vapp.vms.first.ip_address
+
+                #connection.vdc_ci.edge_gateways.first.remove_fw_rules(ips) if !ips.nil?
 
                 vapp.delete                                
                 
@@ -694,6 +714,15 @@ class VCloudVm
         
         #Attach NIC in mode "POOL" to VM connected to network "bridged"
         vm.add_nic(bridge,"POOL",mac)
+
+        #Add firewall rule
+        #if !vm_one.retrieve_elements("/VM/TEMPLATE/CONTEXT/WHITE_TCP_PORTS").nil?
+        #    ports = vm_one.retrieve_elements("/VM/TEMPLATE/CONTEXT/WHITE_TCP_PORTS").first.split(",") 
+        #    ip = []
+        #    ip.push(vm.ip_address.last)
+
+        #    configure_firewall(connection,vapp.name,ip,ports,only_add=true)
+        #end
     end
 
     ###################################################################################################
@@ -710,7 +739,7 @@ class VCloudVm
 
         if nic
             if vm.status == "POWERED_ON"
-                if vm.vmtools_version != "9227"
+                if vm.vmtools_version != "9227" #no va en versió 9227 (WINDOWS)
                     vm.shutdown 
                 else
                     vm.power_off
@@ -743,6 +772,7 @@ class VCloudVm
         end
     end
 
+
     ###################################################################################################
     # Converts a vCloud vApp template object to a ONE template.
     #  @param template     [VCloudSdk::Catalog_Item] The template object.
@@ -760,15 +790,16 @@ class VCloudVm
         str <<  "MEMORY = \"1024\"\n"                          
         str <<  "HYPERVISOR = \"vcloud\"\n"                     
         str <<  "SCHED_REQUIREMENTS=\"HYPERVISOR=\\\"vcloud\\\"\"\n"
+#        str <<  "SCHED_REQUIREMENTS=\"NAME=\\\"#{vdc_name}\\\"\"\n"
         str <<  "CONTEXT = [\n"
         str <<  "  CUSTOMIZATION = \"NO\",\n" 
         str <<  "  HOSTNAME = \"cloud-$UNAME\",\n"                            
         str <<  "  USERNAME = \"$UNAME\",\n"        
-        str <<  "  PASSWORD = \"$USER[PASS_WIN]\",\n"     
-        str <<  "  PASSWORD = \"$USER[PASS]\",\n"
+        str <<  "  PASSWORD = \"$USER[PASS_WIN]\",\n" #if operating_system ==  "WINDOWS"        
+        str <<  "  PASSWORD = \"$USER[PASS]\",\n" #if operating_system ==  "LINUX"
         str <<  "  ROOT_PASS = \"$USER[ROOT_PASS]\",\n"                                  
         str <<  "  NETWORK = \"YES\",\n"   
-        str <<  "  SSH_PUBLIC_KEY = \"$USER[SSH_PUBLIC_KEY]\",\n"     
+        str <<  "  SSH_PUBLIC_KEY = \"$USER[SSH_PUBLIC_KEY]\",\n" #if operating_system ==  "LINUX"      
         str <<  "  OS = \"#{operating_system}\",\n"
         str <<  "  WHITE_TCP_PORTS = \"22,80\"\n"  
         str <<  "]\n"                  
@@ -842,6 +873,10 @@ class VCloudVm
         vapp.power_on
         vm = vapp.vms.first
    
+        ##FIREWALL SECTION 
+        #if !vm.ip_address.nil? and !ports.nil?
+        #    configure_firewall(connection,vApp_name,vm.ip_address,ports) 
+        #end
         return vapp.id
     end
 
@@ -876,7 +911,21 @@ class VCloudVm
                 }
                 array_nics.push(nic_opt)
             }
-        end       
+        end        
+
+        #DISK SECTION -> NOT IMPLEMENTED YET
+
+        #array_disks  = []
+        #disks        = xml.root.get_elements("/VM/TEMPLATE/DISK")  
+
+        #if !disks.nil?            
+        #    disks.each { |disk|
+        #        disk_opt = {
+        #            :size => disk.elements["SIZE"].text
+        #        }
+        #        array_disks.push(disk_opt)
+        #    }                    
+        #end
 
         #HASH CREATION
         hash_spec = {
@@ -885,10 +934,32 @@ class VCloudVm
             :vcpu => cpu,
             :memory => memory,
             :nics => array_nics,
+            #:disks => array_disks,
             :vapp_name => "one-#{id}-#{name}"            
         }
         return hash_spec          
     end  
+
+    def self.configure_firewall(connection,vapp_name,ip_address,ports,only_add=false)
+        rules = []    
+        ports.each do |port|
+            ip_address.each do |ip|                               
+                rule = {
+                    :name => "#{vapp_name} - #{ip}:#{port}",
+                    :ip_src => "Any",
+                    :ip_dest => ip,
+                    :port_src => "Any",
+                    :port_dest => port,
+                    :prot => "TCP",
+                    :action => "allow",
+                    :enabled => "true" 
+                }
+                rules.push(rule)
+            end
+        end 
+        connection.vdc_ci.edge_gateways.first.remove_fw_rules(ip_address) if !only_add         
+        connection.vdc_ci.edge_gateways.first.add_fw_rules(rules)
+    end
 
     ###################################################################################################
     # Reconfigures a vApp with new deployment description
@@ -903,7 +974,7 @@ class VCloudVm
 
         if newvm 
             #CUSTOMIZATION SECTION
-            customization      = xml.root.elements["/VM/TEMPLATE/CONTEXT/CUSTOMIZATION"].text
+            customization      = xml.root.elements["/VM/TEMPLATE/CONTEXT/CUSTOMIZATION"].text if !xml.root.elements["/VM/TEMPLATE/CONTEXT/CUSTOMIZATION"].nil?
 
             if customization == "YES" and !xml.root.elements["/VM/TEMPLATE/CONTEXT/ROOT_PASS"].nil?
                 hostname        = xml.root.elements["/VM/TEMPLATE/CONTEXT/HOSTNAME"].text
@@ -926,7 +997,7 @@ class VCloudVm
         #RECONFIGURE SECTION        
         options_vm = hash_spec_vm(xml)
 
-        vm.reconfigure(options_vm)                        
+        vm.reconfigure(options_vm)                
     end
 
     ###################################################################################################
@@ -940,8 +1011,13 @@ class VCloudVm
     # @params connection[ViClient::conneciton] connection if called from instance
     ###################################################################################################
     def self.attach_disk(hostname, deploy_id, ds_name,img_name, size_mb, vapp=nil, connection=nil)
-        #NOT IMPLEMENTED YET
-        return true
+
+        hid         = VCDConnection::translate_hostname(hostname)
+        connection  = VCDConnection.new(hid)
+        vapp        = connection.find_vapp(deploy_id)
+        vm          = vapp.vms.first
+
+        vm.create_internal_disk(size_mb.to_i)
     end
 
     ###################################################################################################
@@ -1012,9 +1088,11 @@ class VCloudVm
             script = "@echo off\n"
             script << "if \"%1%\" == \"precustomization\" (\n"
             script << "  echo \"Do precustomization tasks\"\n"
+            #script << "  net user Administrator /logonpasswordchg:NO\n"
             script << ") else if \"%1%\" == \"postcustomization\" (\n"
             script << "  echo \"Do postcustomization tasks\"\n"
-            script << "  net user Administrator /logonpasswordchg:NO\n"            
+            #script << "  net user Administrator /logonpasswordchg:NO\n"            
+            script << "  net user Administrator Abc123.\n"
             if !password.nil?
                 script << "  net user #{username} #{password} /add\n"
                 script << "  net localgroup administrators #{username} /add\n"

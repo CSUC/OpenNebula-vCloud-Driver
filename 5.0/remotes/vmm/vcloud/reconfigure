@@ -43,4 +43,3 @@ rescue Exception => e
                 "due to \"#{e.message}\""
     exit -1
 end
-

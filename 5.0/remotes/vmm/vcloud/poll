@@ -30,7 +30,6 @@ require 'vcloud_driver'
 deploy_id = ARGV[0]
 host      = ARGV[1]
 
-##CAMBIAR PER TREBALLAR AMB vAPPs
 host_id      = VCloudDriver::VCDConnection.translate_hostname(host)
 connection = VCloudDriver::VCDConnection.new(host_id)
 vm = connection.find_vm_template(deploy_id)
