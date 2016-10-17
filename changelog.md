@@ -12,8 +12,12 @@
     * Automatized customization of the VMs instanciated. The templates must be configured for that.
     * Import networks, hosts, templates and datastores hosted in vCloud using onevcloud script.
 
+####V0.2 Beta (2016-10-17)
+
+* It's able to:
+	* Manual IP addressment. Before, only POOL addressment was supported.
+	* Configure vShield firewall to filter VM's ports during the instanciation and the attach/detach NIC's.
+
 ###TODO
 
-* Manual IP addressment. Now, only POOL addressment is supported.
 * Attach and detach Hard Disks to VM's.
-* Configure vShield firewall to filter VM's ports during the instanciation and the attach/detach NIC's.

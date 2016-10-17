@@ -165,6 +165,36 @@ class VCDConnection
         end
     end
 
+    def self.vcloud_images(ds_name)
+
+        img_templates = []
+
+        rs = connection.vcd_connection.catalogs;
+        rs.each do |catalog|
+            catalog.items.each do |catalog_item|
+                if catalog_item.type.include? "media" 
+                    img_templates << {
+                        :name        => "#{catalog_item.name} - #{catalog.name}",
+                        :uuid        => catalog_item.id,
+                        :path        => catalog_item.href,
+                        :size        => (catalog_item.size.to_i / 1048576).to_s,
+                        :type        => catog_item.type,
+                        :one         => "NAME=\"#{catalog_item.name} - #{catalog.name}\"\n"\
+                                        "PATH=\"vcloud://#{catalog_item.href}\"\n"\
+                                        "PERSISTENT=\"YES\"\n"\
+                                        "TYPE=\"CDROM\"\n"
+                    }
+                end
+            end
+        end 
+        img_templates
+    end
+
+    ###################################################################################################
+    # Obtain the OpenNebula id for that hostname.
+    #  @param   hostname  [String]   The name of the hostname.
+    #  @return            [String]   Return the identification for the hostname, if exists.
+    ###################################################################################################
     def self.translate_hostname(hostname)        
         host_pool = OpenNebula::HostPool.new(::OpenNebula::Client.new())
         rc        = host_pool.info
@@ -173,6 +203,34 @@ class VCDConnection
         host = host_pool.select {|host_element| host_element.name==hostname }              
         return host.first.id
     end
+
+    ###################################################################################################
+    # Obtain the  OpenNebula id for that network.
+    #  @param   network  [String]   The name of the network.
+    #  @return           [String]   Return the identification for the network, if exists.
+    ################################################################################################### 
+    def self.translate_network(network)        
+        network_pool = OpenNebula::VirtualNetworkPool.new(::OpenNebula::Client.new())
+        rc        = network_pool.info
+        raise "Could not find network #{network}" if OpenNebula.is_error?(rc)
+
+        network = network_pool.select {|network_element| network_element.name==network }              
+        return network.first.id
+    end
+
+    ###################################################################################################
+    # Obtain if the network is enrouted by a vShield.
+    #  @param   network  [String]   The name of the network.
+    #  @return           [Boolean]  Return true if the network is enrouted by vShiel, false otherwise.
+    ################################################################################################### 
+    def self.network_enrouted(network)
+        net_id      = VCDConnection::translate_network(network)
+        net_one     = OpenNebula::VirtualNetwork.new_with_id(net_id,::OpenNebula::Client.new())
+        net_one.info
+        fence_mode = net_one.retrieve_elements("/VNET/TEMPLATE/FENCE_MODE").first
+        ret = fence_mode == "natRouted" ? true : false
+        return ret
+    end   
 
     ###################################################################################################
     # Obtains the name of the datastore identified by ds_id.
@@ -231,7 +289,10 @@ class VCDConnection
     ############################################################################
     def create_virtual_disk(img_name, ds_name, size, adapter_type, disk_type)
         #NOT IMPLEMENTED YET
-        return true
+        #return true
+        @vdc_ci.create_disk(img_name,size.to_i)
+
+        "#{img_name}.vmdk"
     end
 
     ###################################################################################################
@@ -241,7 +302,8 @@ class VCDConnection
     ###################################################################################################
     def delete_virtual_disk(img_name, ds_name)
         #NOT IMPLEMENTED YET
-        return true        
+        #return true 
+        @vdc_ci.delete_disk_by_name(img_name)       
     end
 
     ###################################################################################################
@@ -513,7 +575,7 @@ class VCloudVm
             vapp        = connection.find_vapp(deploy_id)       
             xml         = REXML::Document.new xml_text
         
-            reconfigure_vm(vapp, xml, false, hostname)
+            reconfigure_vm(vapp, xml, false, hostname,connection)
 
             vapp.power_on
             return vapp.id                  
@@ -548,9 +610,9 @@ class VCloudVm
                #     detach_attached_disks(vm, disks, hostname) if disks
                # end
 
-                #ips = vapp.vms.first.ip_address           
-
-                #connection.vdc_ci.edge_gateways.first.remove_fw_rules(ips) if !ips.nil?
+                #REMOVE FW RULES
+                ips = vapp.vms.first.ip_address       
+                connection.vdc_ci.edge_gateways.first.remove_fw_rules(ips) if !ips.nil?
 
                 vapp.delete
             else 
@@ -634,15 +696,17 @@ class VCloudVm
                 vapp.power_off
                 #detach_all_disks(vm) if keep_disks
 
-                #ips = vapp.vms.first.ip_address
-
-                #connection.vdc_ci.edge_gateways.first.remove_fw_rules(ips) if !ips.nil?
+                ips = vapp.vms.first.ip_address
+                connection.vdc_ci.edge_gateways.first.remove_fw_rules(ips) if !ips.nil?
 
                 vapp.delete                                
                 
             when "SHUTDOWN_POWEROFF", "SHUTDOWN_UNDEPLOY"                
                 vapp.shutdown if vapp.vms.first.vmtools_version != "9227"                         
                 vapp.power_off
+
+                ips = vapp.vms.first.ip_address
+                connection.vdc_ci.edge_gateways.first.remove_fw_rules(ips) if !ips.nil?
         end
     end   
 
@@ -716,13 +780,17 @@ class VCloudVm
         vm.add_nic(bridge,"POOL",mac)
 
         #Add firewall rule
-        #if !vm_one.retrieve_elements("/VM/TEMPLATE/CONTEXT/WHITE_TCP_PORTS").nil?
-        #    ports = vm_one.retrieve_elements("/VM/TEMPLATE/CONTEXT/WHITE_TCP_PORTS").first.split(",") 
-        #    ip = []
-        #    ip.push(vm.ip_address.last)
+        net_enrouted     = VCDConnection::network_enrouted(bridge)  
+        tcp_ports        = vm_one.retrieve_elements("/VM/TEMPLATE/CONTEXT/WHITE_TCP_PORTS").first        
+            
+        if net_enrouted and !tcp_ports.nil?
+            nic   = vm.find_nic_by_mac(mac)
+            ports = tcp_ports.split(",") 
+            ip_address    = []
+            ip_address << nic.ip_address
 
-        #    configure_firewall(connection,vapp.name,ip,ports,only_add=true)
-        #end
+            configure_firewall(connection,vapp.name,ip_address,ports,only_add=true) if !ip_address.empty?
+        end
     end
 
     ###################################################################################################
@@ -749,6 +817,11 @@ class VCloudVm
             else
                 vm.delete_nics(nic)
             end
+
+            ###Remove firewall Rules
+            ip_address = []
+            ip_address << nic.ip_address
+            connection.vdc_ci.edge_gateways.first.remove_fw_rules(ip_address) if !ip_address.empty?
         end
     end
 
@@ -788,7 +861,13 @@ class VCloudVm
         str =   "NAME   = \"#{template.name} - #{catalog_name}\"\n"                         
         str <<  "CPU    = \"1\"\n"                                         
         str <<  "MEMORY = \"1024\"\n"                          
-        str <<  "HYPERVISOR = \"vcloud\"\n"                     
+        str <<  "HYPERVISOR = \"vcloud\"\n" 
+        str <<  "PUBLIC_CLOUD = [\n"
+        str <<  "  TYPE        =\"vcloud\",\n"
+        str <<  "  VM_TEMPLATE =\"#{template.id}\",\n"
+        str <<  "  VM_TEMPLATE_NAME =\"#{template.name}\",\n"
+        str <<  "  CATALOG_NAME =\"#{catalog_name}\"\n"                        
+        str <<  "]\n"                  
         str <<  "SCHED_REQUIREMENTS=\"HYPERVISOR=\\\"vcloud\\\"\"\n"
 #        str <<  "SCHED_REQUIREMENTS=\"NAME=\\\"#{vdc_name}\\\"\"\n"
         str <<  "CONTEXT = [\n"
@@ -802,13 +881,8 @@ class VCloudVm
         str <<  "  SSH_PUBLIC_KEY = \"$USER[SSH_PUBLIC_KEY]\",\n" #if operating_system ==  "LINUX"      
         str <<  "  OS = \"#{operating_system}\",\n"
         str <<  "  WHITE_TCP_PORTS = \"22,80\"\n"  
-        str <<  "]\n"                  
-        str <<  "PUBLIC_CLOUD = [\n"
-        str <<  "  TYPE        =\"vcloud\",\n"
-        str <<  "  VM_TEMPLATE =\"#{template.id}\",\n"
-        str <<  "  VM_TEMPLATE_NAME =\"#{template.name}\",\n"
-        str <<  "  CATALOG_NAME =\"#{catalog_name}\"\n"                        
-        str <<  "]\n"
+        str <<  "]\n"                 
+
 
         if template.description.empty?
             str << "DESCRIPTION = \"vCloud Template imported by OpenNebula"\
@@ -849,8 +923,7 @@ class VCloudVm
         vApp_name           = "one-#{vmid}-#{xml.root.elements["/VM/NAME"].text}"
         hid                 = xml.root.elements["//HISTORY_RECORDS/HISTORY/HID"].text
         user                = xml.root.elements["/VM/UNAME"].text
-        ports               = xml.root.elements["/VM/TEMPLATE/CONTEXT/WHITE_TCP_PORTS"].text.split(',')
-            
+         
         raise "Cannot find host id in deployment file history." if hid.nil?
 
         begin
@@ -862,24 +935,37 @@ class VCloudVm
 
             vapp                = catalog.instantiate_vapp_template(template.name,
                                                                 vdc_name,vApp_name,vApp_description)
-            vm                  = vapp.vms.first   
        
         rescue Exception => e
             raise "Cannot clone vApp Template #{e.message}"
         end
 
-        reconfigure_vm(vapp, xml, true, hostname)
-        vapp                = connection.vdc_ci.find_vapp_by_name(vApp_name)
-        vapp.power_on
-        vm = vapp.vms.first
+        reconfigure_vm(vapp, xml, true, hostname,connection)
    
-        ##FIREWALL SECTION 
-        #if !vm.ip_address.nil? and !ports.nil?
-        #    configure_firewall(connection,vApp_name,vm.ip_address,ports) 
-        #end
+        vapp.power_on 
+
         return vapp.id
     end
-
+   
+    ###################################################################################################
+    # Obtain the list of VM's IP belonging to networks enrouted by vShield.
+    #  @param   vm  [VCloudSdk::VM]   The VM.
+    #  @return      [Array]           The list of the IP's enrouted by vShield.
+    ###################################################################################################   
+    def self.ips_enrouted(vm)
+        nics = vm.nics
+        ip_address = []
+            nics.each do |nic|                
+                network          = nic.network
+                ip               = nic.ip_address
+                net_enrouted     = VCDConnection::network_enrouted(network)                 
+                if net_enrouted and !ip.nil? #ONLY ADD IPs ENROUTED BY VSHIELD
+                    ip_address << ip 
+                end
+            end
+        ip_address
+    end
+    
     ###################################################################################################
     # Converts the VM's xml especification to a hash.
     #  @param   xml [XML]   The ONE especification for the VM.
@@ -964,8 +1050,12 @@ class VCloudVm
     ###################################################################################################
     # Reconfigures a vApp with new deployment description
     ###################################################################################################
-    def self.reconfigure_vm(vapp, xml, newvm, hostname)
+    def self.reconfigure_vm(vapp, xml, newvm, hostname,connection=nil)
         vm = vapp.vms.first
+        ports               = xml.root.elements["/VM/TEMPLATE/CONTEXT/WHITE_TCP_PORTS"]
+        ports               = ports.text.split(',') if !ports.nil?
+        vmid                = xml.root.elements["/VM/ID"].text
+        vApp_name           = "one-#{vmid}-#{xml.root.elements["/VM/NAME"].text}"
 
         if !newvm
             #SNAPSHOT SECTION (we need to remove the snapshots before reconfigure the vm)
@@ -981,8 +1071,8 @@ class VCloudVm
                 root_pass       = xml.root.elements["/VM/TEMPLATE/CONTEXT/ROOT_PASS"].text
                 context         = xml.root.elements["/VM/TEMPLATE/CONTEXT"]
                 
-
-                script          = xml.root.elements["/VM/TEMPLATE/CONTEXT/START_SCRIPT"].nil? ? custom_script(context) : xml.root.elements["/VM/TEMPLATE/CONTEXT/START_SCRIPT"].text
+                script          = xml.root.elements["/VM/TEMPLATE/CONTEXT/START_SCRIPT"]
+                script          = script.nil? ? custom_script(context) : xml.root.elements["/VM/TEMPLATE/CONTEXT/START_SCRIPT"].text
 
                 opts            = {
                                 :computer_name => hostname,
@@ -997,7 +1087,14 @@ class VCloudVm
         #RECONFIGURE SECTION        
         options_vm = hash_spec_vm(xml)
 
-        vm.reconfigure(options_vm)                
+        vm.reconfigure(options_vm)
+
+        #FIREWALL CONFIGURATION
+        nics = vm.nics
+        if !nics.nil? and !ports.nil?
+            ip_address = ips_enrouted(vm)
+            configure_firewall(connection,vApp_name,ip_address,ports) if !ip_address.empty?
+        end               
     end
 
     ###################################################################################################
@@ -1016,8 +1113,9 @@ class VCloudVm
         connection  = VCDConnection.new(hid)
         vapp        = connection.find_vapp(deploy_id)
         vm          = vapp.vms.first
-
-        vm.create_internal_disk(size_mb.to_i)
+        
+        disk = connection.vdc_ci.find_disks_by_name(img_name).first
+        vm.attach_disk(disk)
     end
 
     ###################################################################################################

@@ -279,10 +279,6 @@ end
 
                     next if STDIN.gets.strip.downcase != 'y'
 
-                    STDOUT.print "Is this network PUBLIC [y/n]? "
-
-                    public_net = STDIN.gets.strip
-
                     str = ""
                     
                     STDOUT.print "    How many VMs are you planning"\
@@ -354,15 +350,11 @@ end
 
                     str <<  "NAME   = \"#{net.name}\"\n"
                     str <<  "UUID   = \"#{net.id}\"\n"
+                    str <<  "GATEWAY = \"#{net.gateway}\"\n"
+                    str <<  "NETMASK = \"#{net.netmask}\"\n"
                     str <<  "BRIDGE   = \"#{net.name}\"\n"
-                    str <<  "VN_MAD   = \"dummy\"\n"
-
-                    if public_net == 'y'
-                        str <<  "PUBLIC = \"YES\"\n"
-                    else
-                        str <<  "PUBLIC = \"NO\"\n"
-                    end
-                 
+                    str <<  "VN_MAD   = \"dummy\"\n"     
+                    str <<  "FENCE_MODE = \"#{net.fence_mode}\"\n"          
 
                     if !net.description.empty?                                         
                         str << "DESCRIPTION = \"#{net.description} - vCloud Network imported by OpenNebula\"\n"
@@ -370,8 +362,6 @@ end
                         str << "DESCRIPTION = \"vCloud Network imported by OpenNebula\"\n"                                   
                     end                                        
         
-
-
                     rc = one_vn.allocate(str)
 
                     if ::OpenNebula.is_error?(rc)
@@ -470,4 +460,89 @@ end
 
         exit 0
 end
+=begin
+    images_desc = <<-EOT.unindent
+        Import vCenter Images into OpenNebula
+    EOT
+
+    command :images, images_desc, :ds_name, :options=>[ VCLOUD, USER, PASS, VDC  ] do
+        ds_name = args[0]
+
+        if !ds_name
+            STDERR.puts "Datastore name needed to import images from"
+            exit -1
+        end
+        if  options[:vuser].nil? ||
+            options[:vpass].nil? ||
+            options[:vdc].nil? ||
+            options[:vcloud].nil?
+            STDERR.puts "vCloud connection parameters are mandatory to import"\
+                        " datastores:\n"\
+                        "\t --vcloud vCloud hostname\n"\
+                        "\t --vuser username to login in vCloud\n"\
+                        "\t --vpass password for the user\n"\
+                        "\t --vdc virtual data center of vCloud"
+            exit -1
+        end        
+
+        begin
+            STDOUT.print "\nConnecting to vCloud: #{options[:vcloud]}..."
+
+            connection = VCloudDriver::VCDConnection.new_connection(
+                    :user     => options[:vuser],
+                    :password => options[:vpass],
+                    :host     => options[:vcloud], 
+                    :org      => options[:vuser].gsub(/^.*\@/, ""),
+                    :vdc      => options[:vdc])
+
+            STDOUT.print "done!\n\n"
+
+            STDOUT.print "Looking for Images..."
+
+            rs = connection.vcloud_images(ds_name);              
+
+            STDOUT.print "done!\n"
+
+            rs.each do |image|
+
+
+                STDOUT.print "\n  * Image found:\n"\
+                             "      - Name   : #{image[:name]}\n"\
+                             "      - UUID   : #{image[:uuid]}\n"\
+                             "      - Size   : #{image[:size]}"\
+                STDOUT.print "      - Desc   : #{catalog_item.description}\n" if catalog_item.description != ""
+                             "      - Date created: #{catalog_item.date}\n"\
+                             "      - Type: #{catalog_item.type}\n"\
+                             "    Import this OS image [y/n]? "
+
+                next if STDIN.gets.strip.downcase != 'y'
+
+                str = VCloudDriver::VCloudVm.to_one(catalog_item,catalog.name)
+
+                one_i = ::OpenNebula::Image.new(::OpenNebula::Image.build_xml, connection.one)
+
+                rc = one_i.allocate(i[:one], i[:dsid].to_i)
+
+                if ::OpenNebula.is_error?(rc) STDOUT.puts "Error creating image: #{rc.message}\n"
+                    if rc.message == "[ImageAllocate] Not enough space "\
+                                 "in datastore"
+                        STDOUT.puts "Please disable DATASTORE_CAPACITY_"\
+                                "CHECK in /etc/one/oned.conf and "\
+                                "restart OpenNebula."
+                    end
+                else
+                    STDOUT.puts "    OpenNebula image #{one_i.id} created!\n"
+                end
+            end
+
+            STDOUT.print "done!\n"
+            
+        rescue Exception => e
+            STDOUT.puts "error: #{e.message}"
+            exit -1
+        end
+
+        exit 0
+    end
+=end
 end

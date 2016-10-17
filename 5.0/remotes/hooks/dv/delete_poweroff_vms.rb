@@ -36,14 +36,17 @@ drv_action.initialize_xml(Base64.decode64(drv_action_enc), 'VM')
 deploy_id 		= drv_action["/VM/DEPLOY_ID"]
 host  			= drv_action["/VM/HISTORY_RECORDS/HISTORY/HOSTNAME"]
 lcm_state_num 	= drv_action["/VM/LCM_STATE"].to_i
+hypervisor 		= drv_action["/VM/USER_TEMPLATE/HYPERVISOR"]
 lcm_state 		= OpenNebula::VirtualMachine::LCM_STATE[lcm_state_num]
 
 keep_disks 		= nil #NOT IMPLEMENTED YET
 
-begin
-    VCloudDriver::VCloudVm.cancel(deploy_id, host, lcm_state, keep_disks)
-rescue Exception => e
-    STDERR.puts "Cancel of VM #{deploy_id} on host #{host} failed " +
+if hypervisor == "vcloud"	
+	begin
+    	VCloudDriver::VCloudVm.cancel(deploy_id, host, lcm_state, keep_disks)
+	rescue Exception => e
+    	STDERR.puts "Cancel of VM #{deploy_id} on host #{host} failed " +
                 "due to \"#{e.message}\""
-    exit -1
+   		exit -1
+	end
 end
