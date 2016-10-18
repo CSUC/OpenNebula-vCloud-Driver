@@ -12,7 +12,7 @@
     * Automatized customization of the VMs instanciated. The templates must be configured for that.
     * Import networks, hosts, templates and datastores hosted in vCloud using onevcloud script.
 
-####V0.2 Beta (2016-10-17)
+###V0.2 Beta (2016-10-17)
 
 * It's able to:
 	* Manual IP addressment. Before, only POOL addressment was supported.
@@ -20,4 +20,5 @@
 
 ###TODO
 
-* Attach and detach Hard Disks to VM's.
+* Integrate VMRC (VMware Remote Console) to OpenNebula.
+* Attach and detach Images to VM's.

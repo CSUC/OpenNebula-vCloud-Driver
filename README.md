@@ -23,6 +23,7 @@ This addon has the following capabilities:
 * Change RAM and CPU values of VM.
 * It's able to hot-attach and detach NICs to VM's.
 * Automatized customization of the VMs instanciated.
+* Port filtering via vShield during the VM instanciation.
 * Obtain monitoring information from the VDC, Datastore and VM's.
 * In this development version we manage vApps with one VMs inside (A VM in OpenNebula equals a vApp with one VM in vCloud).
 * Each Virtual Data Center (VDC) in vCloud is managed as a Host in OpenNebula.

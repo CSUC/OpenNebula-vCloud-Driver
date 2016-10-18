@@ -807,7 +807,7 @@ class VCloudVm
 
         if nic
             if vm.status == "POWERED_ON"
-                if vm.vmtools_version != "9227" #no va en versió 9227 (WINDOWS)
+                if vm.vmtools_version != "9227"
                     vm.shutdown 
                 else
                     vm.power_off
@@ -869,18 +869,16 @@ class VCloudVm
         str <<  "  CATALOG_NAME =\"#{catalog_name}\"\n"                        
         str <<  "]\n"                  
         str <<  "SCHED_REQUIREMENTS=\"HYPERVISOR=\\\"vcloud\\\"\"\n"
-#        str <<  "SCHED_REQUIREMENTS=\"NAME=\\\"#{vdc_name}\\\"\"\n"
         str <<  "CONTEXT = [\n"
         str <<  "  CUSTOMIZATION = \"NO\",\n" 
         str <<  "  HOSTNAME = \"cloud-$UNAME\",\n"                            
         str <<  "  USERNAME = \"$UNAME\",\n"        
-        str <<  "  PASSWORD = \"$USER[PASS_WIN]\",\n" #if operating_system ==  "WINDOWS"        
-        str <<  "  PASSWORD = \"$USER[PASS]\",\n" #if operating_system ==  "LINUX"
+        str <<  "  PASSWORD = \"$USER[PASS_WIN]\",\n"      
+        str <<  "  PASSWORD = \"$USER[PASS]\",\n"
         str <<  "  ROOT_PASS = \"$USER[ROOT_PASS]\",\n"                                  
         str <<  "  NETWORK = \"YES\",\n"   
-        str <<  "  SSH_PUBLIC_KEY = \"$USER[SSH_PUBLIC_KEY]\",\n" #if operating_system ==  "LINUX"      
-        str <<  "  OS = \"#{operating_system}\",\n"
-        str <<  "  WHITE_TCP_PORTS = \"22,80\"\n"  
+        str <<  "  SSH_PUBLIC_KEY = \"$USER[SSH_PUBLIC_KEY]\",\n"     
+        str <<  "  OS = \"#{operating_system}\"\n"
         str <<  "]\n"                 
 
 
@@ -1062,7 +1060,7 @@ class VCloudVm
             vapp.remove_snapshot if vapp.snapshot_info 
         end
 
-        if newvm 
+        if newvm
             #CUSTOMIZATION SECTION
             customization      = xml.root.elements["/VM/TEMPLATE/CONTEXT/CUSTOMIZATION"].text if !xml.root.elements["/VM/TEMPLATE/CONTEXT/CUSTOMIZATION"].nil?
 
@@ -1186,11 +1184,8 @@ class VCloudVm
             script = "@echo off\n"
             script << "if \"%1%\" == \"precustomization\" (\n"
             script << "  echo \"Do precustomization tasks\"\n"
-            #script << "  net user Administrator /logonpasswordchg:NO\n"
             script << ") else if \"%1%\" == \"postcustomization\" (\n"
-            script << "  echo \"Do postcustomization tasks\"\n"
-            #script << "  net user Administrator /logonpasswordchg:NO\n"            
-            script << "  net user Administrator Abc123.\n"
+            script << "  echo \"Do postcustomization tasks\"\n"          
             if !password.nil?
                 script << "  net user #{username} #{password} /add\n"
                 script << "  net localgroup administrators #{username} /add\n"
