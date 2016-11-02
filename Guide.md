@@ -8,7 +8,7 @@
     * Change permissions and owner
     * Modify /etc/one/oned.conf
     * Restart OpenNebula service
-* Install 'ruby_vcloud_sdk-0.7.5
+* Install 'ruby_vcloud_sdk'
     * Install dependencies
     * Install gem
 * Import hosts,templates,networks,datastores
@@ -112,7 +112,7 @@
 
  	service opennebula restart
 
-# INSTALL 'ruby_vcloud_sdk-0.7.5'
+# INSTALL 'ruby_vcloud_sdk'
 
 As a root:
 
@@ -122,7 +122,7 @@ As a root:
 
 ### 2.Download and install the gem
 
-	gem install ruby_vcloud_sdk-0.7.5.gem
+	gem install ruby_vcloud_sdk-[current_version].gem
 
 
 ## IMPORT HOSTS,TEMPLATES, NETWORKS AND DATASTORE USING ONEVCLOUD SCRIPT
