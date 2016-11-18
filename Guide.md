@@ -174,7 +174,7 @@ The first step is import to OpenNebula the resources hosted in vCloud using the 
 
 In this video you can see how to instantiate a new vm template
 
-![Alt text](picts/vcloud_demo.gif)[https://www.youtube.com/watch?v=TMKmMubm6W0]
+[![Demo vCloud Driver](picts/vcloud_demo.gif)](https://www.youtube.com/watch?v=TMKmMubm6W0)
 
 
 ### TEMPLATE'S CONTEXT VARIABLES
