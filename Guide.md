@@ -170,13 +170,6 @@ The first step is import to OpenNebula the resources hosted in vCloud using the 
 
 ![Alt text](picts/vcloud_vm2.png)
 
-###DEMO
-
-In this video you can see how to instantiate a new vm template
-
-[![Demo vCloud Driver](picts/vcloud_demo.gif)](https://www.youtube.com/watch?v=TMKmMubm6W0)
-
-
 ### TEMPLATE'S CONTEXT VARIABLES
 
 During the instanciation, vcloud driver takes some variables from the template to configure capabilities such as CUSTOMIZATION. If this variables are not in the template, the capabilities won't be configured correctly. Please add or modify the variables that you need.

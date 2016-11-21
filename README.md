@@ -29,6 +29,12 @@ This addon has the following capabilities:
 * Each Virtual Data Center (VDC) in vCloud is managed as a Host in OpenNebula.
 * Import networks, hosts, templates and datastores hosted in vCloud using onevcloud script.
 
+## Demo
+
+In this video you can see how to instantiate a new imported vm template
+
+[![Demo vCloud Driver](picts/vcloud_demo.gif)](https://www.youtube.com/watch?v=TMKmMubm6W0)
+
 ## Development
 
 To contribute bug patches or new features, you can use the github 
