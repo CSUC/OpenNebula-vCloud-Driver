@@ -191,14 +191,21 @@ end
                 end
 
                 catalog.items.each{ |catalog_item|
-                    if catalog_item.type.include? "vAppTemplate"    
-
+                    if catalog_item.type.include? "vAppTemplate"                        
+                        size = 0
+                        disks = catalog_item.vapp_template.disks
+                        disks.each do |disk|
+                            size += disk.capacity.to_i
+                        end
+                        size /= 1024
                         STDOUT.print "\n  * VM Template found:\n"\
                                      "      - Name   : #{catalog_item.name}\n"\
                                      "      - UUID   : #{catalog_item.id}\n"
                         STDOUT.print "      - Desc   : #{catalog_item.description}\n" if catalog_item.description != ""
                         STDOUT.print "      - vApp Template ID   : #{catalog_item.vapp_template_id}\n"\
                                      "      - Date created: #{catalog_item.date}\n"\
+                                     "      - Total Size: #{size} GB\n"\
+                                     "      - OS: #{catalog_item.vapp_template.operating_system}\n"\
                                      "    Import this VM template [y/n]? "
 
                         next if STDIN.gets.strip.downcase != 'y'
@@ -460,5 +467,4 @@ end
 
         exit 0
 end
-
 end

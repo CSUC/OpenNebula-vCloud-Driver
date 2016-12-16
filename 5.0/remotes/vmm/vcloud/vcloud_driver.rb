@@ -51,37 +51,37 @@ module VCloudDriver
 #######################################################################################################
 
 class VCDConnection
-	attr_reader :vcd_connection, :user, :pass, :host, :vdc, :vdc_ci, :org, :org_ci, :one, :one_host
+    attr_reader :vcd_connection, :user, :pass, :host, :vdc, :vdc_ci, :org, :org_ci, :one, :one_host
 
     ###################################################################################################
     # Initializr the VCDConnection, and creates an OpenNebula client. The parameters
     # are obtained from the associated OpenNebula host
     # @param hid [Integer] The OpenNebula host id with VCloud attributes
     ###################################################################################################
-	def initialize(hid)
-    	initialize_one
+    def initialize(hid)
+        initialize_one
 
         @one_host = ::OpenNebula::Host.new_with_id(hid, @one)
         puts @one_host.info
         rc = @one_host.info
 
         if ::OpenNebula.is_error?(rc)
-        	raise "Error getting host information: #{rc.message}"
+            raise "Error getting host information: #{rc.message}"
         end  
           
         password = @one_host["TEMPLATE/VCLOUD_PASSWORD"]
         if !@token.nil?
             begin
                 cipher = OpenSSL::Cipher::Cipher.new("aes-256-cbc")
-               	cipher.decrypt
+                cipher.decrypt
                 cipher.key = @token
                 password =  cipher.update(Base64::decode64(password))
                 password << cipher.final
             rescue
                 raise "Error decrypting vCloud password"
             end
-        end 		
-		connection = {
+        end         
+        connection = {
             :host     => @one_host["TEMPLATE/VCLOUD_URI"],
             :user     => @one_host["TEMPLATE/VCLOUD_USER"],
             :password => password,
@@ -163,31 +163,6 @@ class VCDConnection
             rescue Exception => e
                 raise "Error initializing OpenNebula client: #{e.message}"
         end
-    end
-
-    def self.vcloud_images(ds_name)
-
-        img_templates = []
-
-        rs = connection.vcd_connection.catalogs;
-        rs.each do |catalog|
-            catalog.items.each do |catalog_item|
-                if catalog_item.type.include? "media" 
-                    img_templates << {
-                        :name        => "#{catalog_item.name} - #{catalog.name}",
-                        :uuid        => catalog_item.id,
-                        :path        => catalog_item.href,
-                        :size        => (catalog_item.size.to_i / 1048576).to_s,
-                        :type        => catog_item.type,
-                        :one         => "NAME=\"#{catalog_item.name} - #{catalog.name}\"\n"\
-                                        "PATH=\"vcloud://#{catalog_item.href}\"\n"\
-                                        "PERSISTENT=\"YES\"\n"\
-                                        "TYPE=\"CDROM\"\n"
-                    }
-                end
-            end
-        end 
-        img_templates
     end
 
     ###################################################################################################
@@ -276,37 +251,6 @@ class VCDConnection
     ######################### Datastore Operations ####################################################
 
     ###################################################################################################
-    # Create a VirtualDisk
-    # @param img_name [String] name of the image
-    # @param ds_name  [String] name of the datastore on which the VD will be
-    #                         created
-    # @param size     [String] size of the new image in MB
-    # @param adapter_type [String] as described in
-    #   http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.wssdk.apiref.doc/vim.VirtualDiskManager.VirtualDiskAdapterType.html
-    # @param disk_type [String] as described in
-    #   http://pubs.vmware.com/vsphere-60/index.jsp?topic=%2Fcom.vmware.wssdk.apiref.doc%2Fvim.VirtualDiskManager.VirtualDiskType.html
-    # @return name of the final image
-    ############################################################################
-    def create_virtual_disk(img_name, ds_name, size, adapter_type, disk_type)
-        #NOT IMPLEMENTED YET
-        #return true
-        @vdc_ci.create_disk(img_name,size.to_i)
-
-        "#{img_name}.vmdk"
-    end
-
-    ###################################################################################################
-    # Delete a VirtualDisk
-    # @param img_name [String] name of the image
-    # @param ds_name  [String] name of the datastore where the VD resides
-    ###################################################################################################
-    def delete_virtual_disk(img_name, ds_name)
-        #NOT IMPLEMENTED YET
-        #return true 
-        @vdc_ci.delete_disk_by_name(img_name)       
-    end
-
-    ###################################################################################################
     # Returns Datastore information
     # @param    ds_name [String] name of the datastore
     # @return           [String] monitor information of the DS
@@ -327,11 +271,11 @@ class VCloudHost < ::OpenNebula::Host
 
     UNLIMITED = 9999999
 
-	attr_reader :vcd_client, :vcd_connection
-	
+    attr_reader :vcd_client, :vcd_connection
+    
     def initialize(client)
-       	@vcd_client = client
-        @vdc        = client.vdc_ci   	
+        @vcd_client = client
+        @vdc        = client.vdc_ci     
     end
 
     ###################################################################################################
@@ -349,16 +293,16 @@ class VCloudHost < ::OpenNebula::Host
     ###################################################################################################
     def monitor_cluster
 
-       	#Load the host systems          
-        summary  =	@vdc.resources
+        #Load the host systems          
+        summary  =  @vdc.resources
      
-		str_info = ""
-		# System
-		str_info << "HYPERVISOR=vcloud\n"
-		
-		# CPU
-		mhz_core = vcd_client.one_host["TEMPLATE/CPUSPEED"].to_i
-		str_info << "CPUSPEED=" << mhz_core.to_s  << "\n"
+        str_info = ""
+        # System
+        str_info << "HYPERVISOR=vcloud\n"
+        
+        # CPU
+        mhz_core = vcd_client.one_host["TEMPLATE/CPUSPEED"].to_i
+        str_info << "CPUSPEED=" << mhz_core.to_s  << "\n"
         
         cpu   = vcd_client.one_host["TEMPLATE/CPU"]
 
@@ -368,11 +312,11 @@ class VCloudHost < ::OpenNebula::Host
             cpu = summary.cpu_limit.to_i
         end
 
-		str_info << "TOTALCPU=" << (cpu / mhz_core * 100).to_s << "\n"
-		str_info << "USEDCPU="  << (summary.cpu_used.to_i / mhz_core * 100).to_s << "\n"
-		str_info << "FREECPU="  << (summary.cpu_available.to_i / mhz_core * 100).to_s << "\n"
+        str_info << "TOTALCPU=" << (cpu / mhz_core * 100).to_s << "\n"
+        str_info << "USEDCPU="  << (summary.cpu_used.to_i / mhz_core * 100).to_s << "\n"
+        str_info << "FREECPU="  << (summary.cpu_available.to_i / mhz_core * 100).to_s << "\n"
 
-		# Memory
+        # Memory
         memory   = vcd_client.one_host["TEMPLATE/MEMORY"]
 
         if !memory.nil? and memory == "UNLIMITED"
@@ -381,10 +325,10 @@ class VCloudHost < ::OpenNebula::Host
             memory = summary.memory_limit.to_i
         end
 
-		str_info << "TOTALMEMORY=" << (memory * 1024).to_s << "\n"
-		str_info << "FREEMEMORY="  << (summary.memory_available.to_i * 1024).to_s << "\n"
-		str_info << "USEDMEMORY="  << (summary.memory_used.to_i * 1024).to_s
-	end
+        str_info << "TOTALMEMORY=" << (memory * 1024).to_s << "\n"
+        str_info << "FREEMEMORY="  << (summary.memory_available.to_i * 1024).to_s << "\n"
+        str_info << "USEDMEMORY="  << (summary.memory_used.to_i * 1024).to_s
+    end
 
     ###################################################################################################
     # Generate an OpenNebula monitor string for the VMs in this host. 
@@ -577,6 +521,7 @@ class VCloudVm
         
             reconfigure_vm(vapp, xml, false, hostname,connection)
 
+            vapp.vms.first.power_on
             vapp.power_on
             return vapp.id                  
         end
@@ -600,15 +545,7 @@ class VCloudVm
                 connection  = VCDConnection.new(hid)
                 vapp        = connection.find_vapp(deploy_id)                               
                                                                 
-                vapp.power_off if vapp.status == "POWERED_ON"
-               
-
-               # NOT IMPLEMENTED YET
-               # if keep_disks
-               #     detach_all_disks(vm)
-               # else
-               #     detach_attached_disks(vm, disks, hostname) if disks
-               # end
+                vapp.power_off if vapp.status == "POWERED_ON"            
 
                 #REMOVE FW RULES
                 ips = vapp.vms.first.ip_address       
@@ -619,6 +556,18 @@ class VCloudVm
                 raise "LCM_STATE #{lcm_state} not supported for cancel"
         end
 
+    end
+
+    ###################################################################################################
+    # Cancels a VM failed during the instanciation
+    #  @param name VM's name
+    #  @param hostname name of the host (equals the vCloud VDC)
+    ###################################################################################################   
+    def self.delete_failed(name,hostname)
+                hid         = VCDConnection::translate_hostname(hostname) 
+                connection  = VCDConnection.new(hid)
+                vapp        = connection.find_vapp_by_name(name)
+                vapp.delete
     end
 
     ###################################################################################################
@@ -765,7 +714,7 @@ class VCloudVm
     #  @param bridge        The name of the Network in vCloud
     #  @param hostname      Name of the host (equals the vCloud VDC)
     ###################################################################################################
-    def self.attach_nic(deploy_id, mac, bridge, hostname,vm_id)        
+    def self.attach_nic(deploy_id, mac, bridge, hostname,vm_id,target)        
         hid         = VCDConnection::translate_hostname(hostname)
         connection  = VCDConnection.new(hid)
         vapp        = connection.find_vapp(deploy_id)
@@ -773,11 +722,16 @@ class VCloudVm
         vm_one      = OpenNebula::VirtualMachine.new_with_id(vm_id,connection.one)
         vm_one.info
 
+        ip          = vm_one.retrieve_elements("/VM/TEMPLATE/NIC[MAC=\'#{mac}\']/IP").nil? ? nil : vm_one.retrieve_elements("/VM/TEMPLATE/NIC[MAC=\'#{mac}\']/IP").text
         #Add network "bridge" to vApp                                                    
         vapp.add_network_by_name(bridge) if !vapp.list_networks.include? "#{bridge}"        
         
-        #Attach NIC in mode "POOL" to VM connected to network "bridged"
-        vm.add_nic(bridge,"POOL",mac)
+        #Attach NIC in mode "MANUAL" if a IP is retrieved, otherwise attach in mode "POOL"
+        if !ip.nil?        
+            vm.add_nic(bridge,"MANUAL",mac,ip)
+        else
+            vm.add_nic(bridge,"POOL",mac)
+        end
 
         #Add firewall rule
         net_enrouted     = VCDConnection::network_enrouted(bridge)  
@@ -854,9 +808,8 @@ class VCloudVm
     ###################################################################################################
     def self.to_one(template,catalog_name)
         
-        operating_system = "OTHER"
-        operating_system = "LINUX" if template.name.downcase.include? "linux"
-        operating_system = "WINDOWS" if template.name.downcase.include? "windows"
+        operating_system = obtain_OS(template)
+        disks = template.vapp_template.disks       
 
         str =   "NAME   = \"#{template.name} - #{catalog_name}\"\n"                         
         str <<  "CPU    = \"1\"\n"                                         
@@ -869,18 +822,26 @@ class VCloudVm
         str <<  "  CATALOG_NAME =\"#{catalog_name}\"\n"                        
         str <<  "]\n"                  
         str <<  "SCHED_REQUIREMENTS=\"HYPERVISOR=\\\"vcloud\\\"\"\n"
+
+        disks.each do |disk|
+            str << "DISK = [\n"
+            str << "DISK_ID = \"#{disk.id}\",\n"
+            str << "SIZE = \"#{disk.capacity}\",\n"
+            str << "TYPE = \"fs\"" 
+            str << "]\n"
+        end
+
         str <<  "CONTEXT = [\n"
         str <<  "  CUSTOMIZATION = \"NO\",\n" 
         str <<  "  HOSTNAME = \"cloud-$UNAME\",\n"                            
         str <<  "  USERNAME = \"$UNAME\",\n"        
-        str <<  "  PASSWORD = \"$USER[PASS_WIN]\",\n"      
-        str <<  "  PASSWORD = \"$USER[PASS]\",\n"
+        str <<  "  PASSWORD = \"$USER[PASS_WIN]\",\n"  if operating_system == "WINDOWS"    
+        str <<  "  PASSWORD = \"$USER[PASS]\",\n"      if operating_system == "LINUX" 
         str <<  "  ROOT_PASS = \"$USER[ROOT_PASS]\",\n"                                  
         str <<  "  NETWORK = \"YES\",\n"   
-        str <<  "  SSH_PUBLIC_KEY = \"$USER[SSH_PUBLIC_KEY]\",\n"     
+        str <<  "  SSH_PUBLIC_KEY = \"$USER[SSH_PUBLIC_KEY]\",\n"  if operating_system == "LINUX"    
         str <<  "  OS = \"#{operating_system}\"\n"
         str <<  "]\n"                 
-
 
         if template.description.empty?
             str << "DESCRIPTION = \"vCloud Template imported by OpenNebula"\
@@ -898,7 +859,7 @@ class VCloudVm
     ###################################################################################################
     def self.clone_vm(xml_text, hostname)
 
-        xml = REXML::Document.new xml_text        
+         xml = REXML::Document.new xml_text        
         pcs = xml.root.get_elements("//USER_TEMPLATE/PUBLIC_CLOUD")
 
         raise "Cannot find VCloud element in VM template." if pcs.nil?
@@ -926,25 +887,63 @@ class VCloudVm
 
         begin
             connection          = VCDConnection.new(hid)         
-            catalog             = connection.vcd_connection.find_catalog_by_name(catalog_name)
+            catalog             = connection.vcd_connection.find_catalog_by_name(catalog_name)            
             template            = catalog.find_vapp_template_by_id(template_id)
             vdc_name            = connection.vdc
-            vApp_description    = "vApp instantiated by OpenNebula by user #{user} " 
+            vApp_description    = "vApp instantiated by OpenNebula by user #{user}" 
 
-            vapp                = catalog.instantiate_vapp_template(template.name,
-                                                                vdc_name,vApp_name,vApp_description)
+            disks        = xml.root.get_elements("/VM/TEMPLATE/DISK[DISK_ID='0']")  
+            vm_params = []
+
+            if !disks.nil?         
+                disk_id = disks.first.elements["DISK_ID"].text                           
+                disk_opt = {
+                    :id   => disk_id,                                  
+                    :size => disks.first.elements["SIZE"].text
+                }
+                vm_params.push(disk_opt)                
+            end                     
+            
+            vapp = catalog.instantiate_vapp_template(template.name,vdc_name,vApp_name,vApp_description,nil,nil,vm_params)
        
         rescue Exception => e
             raise "Cannot clone vApp Template #{e.message}"
         end
-
+        
         reconfigure_vm(vapp, xml, true, hostname,connection)
    
         vapp.power_on 
 
         return vapp.id
     end
-   
+
+    ###################################################################################################
+    # Obtain OS's type of the vApp Template.
+    #  @param   template  [VCloudSdk::CatalogItem]   The vApp template.
+    ###################################################################################################   
+    def self.obtain_OS(template)
+
+        os = template.vapp_template.operating_system.downcase
+
+        if os.include? "windows" 
+            return "WINDOWS"
+        elsif os.include? "centos" 
+            return "LINUX"
+        elsif os.include? "debian" 
+            return "LINUX"
+        elsif os.include? "ubuntu" 
+            return "LINUX"
+        elsif os.include? "redhat" 
+            return "LINUX"
+        elsif os.include? "linux" 
+            return "LINUX"        
+        elsif os.include? "suse" 
+            return "LINUX"
+        else 
+            return "OTHER"
+        end
+    end
+
     ###################################################################################################
     # Obtain the list of VM's IP belonging to networks enrouted by vShield.
     #  @param   vm  [VCloudSdk::VM]   The VM.
@@ -979,7 +978,6 @@ class VCloudVm
         description   = "VM of one-#{id}-#{name}"    
 
         #NETWORK SECTION
-
         array_nics    = []   
         nics          = xml.root.get_elements("/VM/TEMPLATE/NIC")        
         
@@ -997,19 +995,20 @@ class VCloudVm
             }
         end        
 
-        #DISK SECTION -> NOT IMPLEMENTED YET
+        #DISK SECTION
+        array_disks  = []
 
-        #array_disks  = []
-        #disks        = xml.root.get_elements("/VM/TEMPLATE/DISK")  
+        disks        = xml.root.get_elements("/VM/TEMPLATE/DISK")  
 
-        #if !disks.nil?            
-        #    disks.each { |disk|
-        #        disk_opt = {
-        #            :size => disk.elements["SIZE"].text
-        #        }
-        #        array_disks.push(disk_opt)
-        #    }                    
-        #end
+        if !disks.nil?                       
+            disks.each do |disk|                                                          
+                disk_opt = {
+                    :id   => disk_id = disk.elements["DISK_ID"].text,                                                 
+                    :size => disk.elements["SIZE"].text
+                }
+                array_disks.push(disk_opt)
+            end
+        end                    
 
         #HASH CREATION
         hash_spec = {
@@ -1018,7 +1017,7 @@ class VCloudVm
             :vcpu => cpu,
             :memory => memory,
             :nics => array_nics,
-            #:disks => array_disks,
+            :disks => array_disks,
             :vapp_name => "one-#{id}-#{name}"            
         }
         return hash_spec          
@@ -1049,7 +1048,7 @@ class VCloudVm
     # Reconfigures a vApp with new deployment description
     ###################################################################################################
     def self.reconfigure_vm(vapp, xml, newvm, hostname,connection=nil)
-        vm = vapp.vms.first
+        vm                  = vapp.vms.first
         ports               = xml.root.elements["/VM/TEMPLATE/CONTEXT/WHITE_TCP_PORTS"]
         ports               = ports.text.split(',') if !ports.nil?
         vmid                = xml.root.elements["/VM/ID"].text
@@ -1063,28 +1062,32 @@ class VCloudVm
         if newvm
             #CUSTOMIZATION SECTION
             customization      = xml.root.elements["/VM/TEMPLATE/CONTEXT/CUSTOMIZATION"].text if !xml.root.elements["/VM/TEMPLATE/CONTEXT/CUSTOMIZATION"].nil?
+            os                 = xml.root.elements["/VM/TEMPLATE/CONTEXT/OS"].text.downcase if !xml.root.elements["/VM/TEMPLATE/CONTEXT/OS"].nil?
 
-            if customization == "YES" and !xml.root.elements["/VM/TEMPLATE/CONTEXT/ROOT_PASS"].nil?
-                hostname        = xml.root.elements["/VM/TEMPLATE/CONTEXT/HOSTNAME"].text
-                root_pass       = xml.root.elements["/VM/TEMPLATE/CONTEXT/ROOT_PASS"].text
+            if customization == "YES"
+                
+                hostname        = xml.root.elements["/VM/TEMPLATE/CONTEXT/HOSTNAME"].text.empty? ? nil : xml.root.elements["/VM/TEMPLATE/CONTEXT/HOSTNAME"].text
+                root_pass       = xml.root.elements["/VM/TEMPLATE/CONTEXT/ROOT_PASS"].text.empty? ? nil : xml.root.elements["/VM/TEMPLATE/CONTEXT/ROOT_PASS"].text
                 context         = xml.root.elements["/VM/TEMPLATE/CONTEXT"]
                 
                 script          = xml.root.elements["/VM/TEMPLATE/CONTEXT/START_SCRIPT"]
                 script          = script.nil? ? custom_script(context) : xml.root.elements["/VM/TEMPLATE/CONTEXT/START_SCRIPT"].text
-
-                opts            = {
+                
+                opts            = {                                
                                 :computer_name => hostname,
                                 :admin_pass => root_pass,
-                                :custom_script => script 
+                                :custom_script => script,
+                                :sid => os == "windows"
                                 }
-
+                               
                 vm.customization(opts)
+
             end                
         end
 
         #RECONFIGURE SECTION        
         options_vm = hash_spec_vm(xml)
-
+        
         vm.reconfigure(options_vm)
 
         #FIREWALL CONFIGURATION
@@ -1106,14 +1109,8 @@ class VCloudVm
     # @params connection[ViClient::conneciton] connection if called from instance
     ###################################################################################################
     def self.attach_disk(hostname, deploy_id, ds_name,img_name, size_mb, vapp=nil, connection=nil)
-
-        hid         = VCDConnection::translate_hostname(hostname)
-        connection  = VCDConnection.new(hid)
-        vapp        = connection.find_vapp(deploy_id)
-        vm          = vapp.vms.first
-        
-        disk = connection.vdc_ci.find_disks_by_name(img_name).first
-        vm.attach_disk(disk)
+        #NOT IMPLEMENTED YET
+        return true
     end
 
     ###################################################################################################
@@ -1128,24 +1125,7 @@ class VCloudVm
         #NOT IMPLEMENTED YET
         return true
     end
-
-    ###################################################################################################
-    # Detach all disks from a VM
-    # @params vm[VCenterVm] vCenter VM
-    ###################################################################################################
-    def self.detach_all_disks(vm)
-        #NOT IMPLEMENTED YET
-        return true
-    end
-
-    ###################################################################################################
-    # Detach attached disks from a VM
-    ###################################################################################################
-    def self.detach_attached_disks(vm, disks, hostname)
-        #NOT IMPLEMENTED YET
-        return true
-    end
-    
+  
     ###################################################################################################
     # Obtains the customization script for the Virtual Machine
     #  @params context [XML] The ONE template's context
@@ -1154,9 +1134,9 @@ class VCloudVm
     def self.custom_script(context)
 
          user_pubkey = context.elements["SSH_PUBLIC_KEY"].text if !context.elements["SSH_PUBLIC_KEY"].nil? 
-         username    = context.elements["USERNAME"].text
+         username    = context.elements["USERNAME"].text if !context.elements["USERNAME"].nil? 
          password    = context.elements["PASSWORD"].text  if !context.elements["PASSWORD"].nil? 
-         os          = context.elements["OS"].text.downcase
+         os          = context.elements["OS"].text.downcase if !context.elements["OS"].nil?
 
         if os == "linux"
             script = "#!/bin/sh\n"
@@ -1180,17 +1160,14 @@ class VCloudVm
             script << "fi"
 
         elsif os == "windows"
-
-            script = "@echo off\n"
-            script << "if \"%1%\" == \"precustomization\" (\n"
-            script << "  echo \"Do precustomization tasks\"\n"
-            script << ") else if \"%1%\" == \"postcustomization\" (\n"
-            script << "  echo \"Do postcustomization tasks\"\n"          
+            script = "@echo off\n"                
             if !password.nil?
-                script << "  net user #{username} #{password} /add\n"
-                script << "  net localgroup administrators #{username} /add\n"
-            end            
-            script << ")\n"       
+                script << "net user #{username} #{password} /add\n"
+                script << "net localgroup administrators #{username} /add\n"               
+            end
+            script << "reg add \"HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Terminal Server\" /v fDenyTSConnections /t REG_DWORD /d 0 /f\n"
+            script << "reg add \"HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Terminal Server\\\WinStations\\RDP-Tcp\" /v UserAuthentication /t REG_DWORD /d 0 /f\n"
+            script << "netsh firewall set service type = remotedesktop mode = enable\n"     
         else
             nil
         end

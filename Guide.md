@@ -75,7 +75,17 @@
         command = "dv/delete_poweroff_vms.rb",
         arguments = "$TEMPLATE" ]
        #-------------------------------------------------------------------------------
+       VM_HOOK = [
+        name      = "delete_failed_vms",
+        on        = "CUSTOM",
+        state     = "ACTIVE",
+        lcm_state = "BOOT_FAILURE",
+        command   = "dv/delete_failed_vms.rb",
+        arguments = "$TEMPLATE" 
+       ]
+       #-------------------------------------------------------------------------------
        ```
+
 
 
 * In TM_MAD section:

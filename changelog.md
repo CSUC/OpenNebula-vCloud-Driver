@@ -18,7 +18,11 @@
 	* Manual IP addressment. Before, only POOL addressment was supported.
 	* Configure vShield firewall to filter VM's ports during the instanciation and the attach/detach NIC's.
 
+###V0.3 Beta (2016-12-15)
+* It's able to:
+	* Cold Attach & detach volatile disks to VM's
+
 ###TODO
 
 * Integrate VMRC (VMware Remote Console) to OpenNebula.
-* Attach and detach Images to VM's.
+* Hot Attach & detach volatile disks to VM's

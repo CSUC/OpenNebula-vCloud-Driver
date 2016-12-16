@@ -13,37 +13,4 @@
 # See the License for the specific language governing permissions and        #
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
-
-ONE_LOCATION=ENV["ONE_LOCATION"] if !defined?(ONE_LOCATION)
-
-if !ONE_LOCATION
-    RUBY_LIB_LOCATION="/usr/lib/one/ruby" if !defined?(RUBY_LIB_LOCATION)
-else
-    RUBY_LIB_LOCATION=ONE_LOCATION+"/lib/ruby" if !defined?(RUBY_LIB_LOCATION)
-end
-
-$: << RUBY_LIB_LOCATION
-$: << File.dirname(__FILE__)
-
-require 'vcloud_driver'
-
-deploy_id = ARGV[0]
-mac       = ARGV[1]
-bridge    = ARGV[2]
-target    = ARGV[5]
-hostname  = ARGV[-1]
-vm_id 	  = ARGV[6]
-
-begin
-    VCloudDriver::VCloudVm.attach_nic(deploy_id,
-                                        mac,
-                                        bridge,
-                                        hostname,
-                                        vm_id,
-                                        target)
-rescue Exception => e
-    STDERR.puts "Attach NIC for VM #{deploy_id} on host #{hostname} failed " +
-                "due to \"#{e.message}\""
-    exit -1
-end
-
+exit 0
