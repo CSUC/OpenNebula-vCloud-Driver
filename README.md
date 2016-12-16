@@ -57,8 +57,8 @@ Leaders: Miguel Ángel Flores (miguel.angel.flores@csuc.cat), Xavier Peralta (xa
 
 ## Compatibility
 
-This addon was tested on OpenNebula 5.02, with the frontend installed on Ubuntu 14.04.
-It works with vcloud API version 5.5 [+Info] (https://developercenter.vmware.com/web/sdk/5.5.0/vcloud-api)
+* This addon was tested on OpenNebula 5.02, with the frontend installed on Ubuntu 14.04.
+* It works with vcloud API version 5.5 [+Info] (https://developercenter.vmware.com/web/sdk/5.5.0/vcloud-api)
 
 
 ## Installation, Configuration and Usage
