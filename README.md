@@ -22,6 +22,7 @@ This addon has the following capabilities:
 * Create, delete and revert snapshots of VM's.
 * Change RAM and CPU values of VM.
 * It's able to hot-attach and detach NICs to VM's.
+* Attach disks to VM. Now, during the deployment process only.
 * Automatized customization of the VMs instanciated.
 * Port filtering via vShield during the VM instanciation.
 * Obtain monitoring information from the VDC, Datastore and VM's.
@@ -56,8 +57,8 @@ Leaders: Miguel Ángel Flores (miguel.angel.flores@csuc.cat), Xavier Peralta (xa
 
 ## Compatibility
 
-This addon was tested on OpenNebula 5.02, with the 
-frontend installed on Ubuntu 14.04.
+This addon was tested on OpenNebula 5.02, with the frontend installed on Ubuntu 14.04.
+It works with vcloud API version 5.5 [+Info] (https://developercenter.vmware.com/web/sdk/5.5.0/vcloud-api)
 
 
 ## Installation, Configuration and Usage
