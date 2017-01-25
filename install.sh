@@ -19,14 +19,14 @@ CHMOD=/bin/chmod
 echo "copying files...."
 
 $CP -R 5.0/remotes/vmm/vcloud $REMOTES_DIR/vmm/
-$CP -R 5.0/remotes/im/vloud.d $REMOTES_DIR/im/
+$CP -R 5.0/remotes/im/vcloud.d $REMOTES_DIR/im/
 $CP -R 5.0/remotes/datastore/vcloud $REMOTES_DIR/datastore/
 $CP -R 5.0/remotes/hooks/dv $REMOTES_DIR/hooks/
 $CP 5.0/remotes/vmm/vcloud/vcloud_driver.rb /usr/lib/one/ruby
 
-CHOWN -R oneadmin:oneadmin /var/lib/one/remotes/vmm/vcloud /var/lib/one/remotes/im/vcloud.d /var/lib/one/remotes/datastore/vcloud /var/lib/one/remotes/hooks/dv
+$CHOWN -R oneadmin:oneadmin /var/lib/one/remotes/vmm/vcloud /var/lib/one/remotes/im/vcloud.d /var/lib/one/remotes/datastore/vcloud /var/lib/one/remotes/hooks/dv
 
-CHMOD -R +x /var/lib/one/remotes/vmm/vcloud /var/lib/one/remotes/im/vcloud.d /var/lib/one/remotes/datastore/vcloud /var/lib/one/remotes/hooks/dv
+$CHMOD -R +x /var/lib/one/remotes/vmm/vcloud /var/lib/one/remotes/im/vcloud.d /var/lib/one/remotes/datastore/vcloud /var/lib/one/remotes/hooks/dv
 
 echo "Finished copying files"
 

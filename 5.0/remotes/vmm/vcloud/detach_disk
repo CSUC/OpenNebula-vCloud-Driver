@@ -13,4 +13,44 @@
 # See the License for the specific language governing permissions and        #
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
-exit 0
+
+ONE_LOCATION=ENV["ONE_LOCATION"] if !defined?(ONE_LOCATION)
+
+if !ONE_LOCATION
+    RUBY_LIB_LOCATION="/usr/lib/one/ruby" if !defined?(RUBY_LIB_LOCATION)
+else
+    RUBY_LIB_LOCATION=ONE_LOCATION+"/lib/ruby" if !defined?(RUBY_LIB_LOCATION)
+end
+
+$: << RUBY_LIB_LOCATION
+$: << File.dirname(__FILE__)
+
+require 'vcloud_driver'
+require 'opennebula'
+
+deploy_id      = ARGV[0]
+
+drv_action_enc = STDIN.read.gsub("\n","")
+
+drv_action = OpenNebula::XMLElement.new
+drv_action.initialize_xml(Base64.decode64(drv_action_enc),
+                          'VMM_DRIVER_ACTION_DATA')
+
+hostname  = drv_action["/VMM_DRIVER_ACTION_DATA/HOST"]
+disk_id   = drv_action["/VMM_DRIVER_ACTION_DATA/VM/TEMPLATE/DISK[ATTACH='YES']/DISK_ID"]
+
+
+
+if hostname.nil? || deploy_id.nil? || disk_id.nil?
+    STDERR.puts "Not enough information to perform detach_disk."
+    exit -1
+end
+
+begin
+    VCloudDriver::VCloudVm.detach_disk(hostname,
+                                         deploy_id,
+                                         disk_id)
+rescue Exception => e
+    STDERR.puts "Error detaching image #{disk_id}. Reason: #{e.message}"
+    exit -1
+end

@@ -32,7 +32,7 @@ deploy_id      = ARGV[0]
 source         = ARGV[1]
 target         = ARGV[2]
 target_index   = ARGV[3]
-drv_action_enc = ARGV[-1]
+drv_action_enc = ARGV[4]
 
 drv_action = OpenNebula::XMLElement.new
 drv_action.initialize_xml(Base64.decode64(drv_action_enc), 'VMM_DRIVER_ACTION_DATA')
@@ -43,8 +43,7 @@ disk_id   = drv_action["/VMM_DRIVER_ACTION_DATA/VM/TEMPLATE/DISK[ATTACH='YES']/D
 size_mb   = drv_action["/VMM_DRIVER_ACTION_DATA/VM/TEMPLATE/DISK[ATTACH='YES']/SIZE"]
 
 if vm_id.nil? || disk_id.nil? || size_mb.nil?
-    STDERR.puts "Not enough information to attach disk, missing datastore"\
-                " name or vcenter cluster name or image path."
+    STDERR.puts "Not enough information to attach disk."
     exit -1
 end
 
@@ -52,8 +51,8 @@ begin
     VCloudDriver::VCloudVm.attach_disk(hostname, 
                                          deploy_id,                                         
                                          disk_id,
-                                         size_kb)
+                                         size_mb)
 rescue Exception => e
-    STDERR.puts "Error attach image #{img_path}. Reason: #{e.message}"
+    STDERR.puts "Error attach image #{disk_id}. Reason: #{e.message}"
     exit -1
 end

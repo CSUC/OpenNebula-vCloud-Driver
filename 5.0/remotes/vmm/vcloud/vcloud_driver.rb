@@ -51,37 +51,37 @@ module VCloudDriver
 #######################################################################################################
 
 class VCDConnection
-    attr_reader :vcd_connection, :user, :pass, :host, :vdc, :vdc_ci, :org, :org_ci, :one, :one_host
+	attr_reader :vcd_connection, :user, :pass, :host, :vdc, :vdc_ci, :org, :org_ci, :one, :one_host
 
     ###################################################################################################
     # Initializr the VCDConnection, and creates an OpenNebula client. The parameters
     # are obtained from the associated OpenNebula host
     # @param hid [Integer] The OpenNebula host id with VCloud attributes
     ###################################################################################################
-    def initialize(hid)
-        initialize_one
+	def initialize(hid)
+    	initialize_one
 
         @one_host = ::OpenNebula::Host.new_with_id(hid, @one)
         puts @one_host.info
         rc = @one_host.info
 
         if ::OpenNebula.is_error?(rc)
-            raise "Error getting host information: #{rc.message}"
+        	raise "Error getting host information: #{rc.message}"
         end  
           
         password = @one_host["TEMPLATE/VCLOUD_PASSWORD"]
         if !@token.nil?
             begin
                 cipher = OpenSSL::Cipher::Cipher.new("aes-256-cbc")
-                cipher.decrypt
+               	cipher.decrypt
                 cipher.key = @token
                 password =  cipher.update(Base64::decode64(password))
                 password << cipher.final
             rescue
                 raise "Error decrypting vCloud password"
             end
-        end         
-        connection = {
+        end 		
+		connection = {
             :host     => @one_host["TEMPLATE/VCLOUD_URI"],
             :user     => @one_host["TEMPLATE/VCLOUD_USER"],
             :password => password,
@@ -109,7 +109,7 @@ class VCDConnection
         @vdc  = user_opts[:vdc]
         @org  = user_opts[:org]
 
-        log_file = "/var/log/one/vcloud.log"
+        log_file = "/var/lib/one/vcloud.log"
         FileUtils.mkdir_p(File.dirname(log_file))
         @logger = Logger.new(log_file)
         @logger.level = Logger::DEBUG
@@ -205,7 +205,29 @@ class VCDConnection
         fence_mode = net_one.retrieve_elements("/VNET/TEMPLATE/FENCE_MODE").first
         ret = fence_mode == "natRouted" ? true : false
         return ret
-    end   
+    end
+
+    ###################################################################################################
+    # Obtain the list of public IP's of the VM.
+    #  @param   vm  [VCloudSdk::VM]   The VM.
+    #  @return      [Array]           The list of the IP.
+    ###################################################################################################   
+    def self.public_ip(vm,vdc_ci)
+        nics = vm.nics
+        ip_address = []
+            nics.each do |nic|                
+                network          = nic.network
+                ip               = nic.ip_address
+                net_enrouted     = VCDConnection::network_enrouted(network)                 
+                if net_enrouted and !ip.nil? #ONLY ADD IPs ENROUTED BY VSHIELD
+                    ip_public_net = vdc_ci.edge_gateways.first.public_ip_net.split('.')
+                    ip_public = ip_public_net[0] << '.' << ip_public_net[1] << '.' << ip_public_net[2] << '.'
+                    ip_public << ip.split('.')[3]
+                    ip_address << ip_public 
+                end
+            end
+        ip_address
+    end  
 
     ###################################################################################################
     # Obtains the name of the datastore identified by ds_id.
@@ -239,6 +261,10 @@ class VCDConnection
         return @vdc_ci.find_vapp_by_id(uuid)        
     end
 
+    def find_vapp_by_name(name)
+        return @vdc_ci.find_vapp_by_name(name) 
+    end
+
     def encrypt_password(pass)
         cipher = OpenSSL::Cipher::Cipher.new("aes-256-cbc")
         cipher.encrypt
@@ -249,6 +275,37 @@ class VCDConnection
     end
 
     ######################### Datastore Operations ####################################################
+
+    ###################################################################################################
+    # Create a VirtualDisk
+    # @param img_name [String] name of the image
+    # @param ds_name  [String] name of the datastore on which the VD will be
+    #                         created
+    # @param size     [String] size of the new image in MB
+    # @param adapter_type [String] as described in
+    #   http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.wssdk.apiref.doc/vim.VirtualDiskManager.VirtualDiskAdapterType.html
+    # @param disk_type [String] as described in
+    #   http://pubs.vmware.com/vsphere-60/index.jsp?topic=%2Fcom.vmware.wssdk.apiref.doc%2Fvim.VirtualDiskManager.VirtualDiskType.html
+    # @return name of the final image
+    ############################################################################
+    def create_virtual_disk(img_name, ds_name, size, adapter_type, disk_type)
+        #NOT IMPLEMENTED YET
+        #return true
+        @vdc_ci.create_disk(img_name,size.to_i)
+
+        "#{img_name}.vmdk"
+    end
+
+    ###################################################################################################
+    # Delete a VirtualDisk
+    # @param img_name [String] name of the image
+    # @param ds_name  [String] name of the datastore where the VD resides
+    ###################################################################################################
+    def delete_virtual_disk(img_name, ds_name)
+        #NOT IMPLEMENTED YET
+        #return true 
+        @vdc_ci.delete_disk_by_name(img_name)       
+    end
 
     ###################################################################################################
     # Returns Datastore information
@@ -271,11 +328,11 @@ class VCloudHost < ::OpenNebula::Host
 
     UNLIMITED = 9999999
 
-    attr_reader :vcd_client, :vcd_connection
-    
+	attr_reader :vcd_client, :vcd_connection
+	
     def initialize(client)
-        @vcd_client = client
-        @vdc        = client.vdc_ci     
+       	@vcd_client = client
+        @vdc        = client.vdc_ci   	
     end
 
     ###################################################################################################
@@ -293,16 +350,16 @@ class VCloudHost < ::OpenNebula::Host
     ###################################################################################################
     def monitor_cluster
 
-        #Load the host systems          
-        summary  =  @vdc.resources
+       	#Load the host systems          
+        summary  =	@vdc.resources
      
-        str_info = ""
-        # System
-        str_info << "HYPERVISOR=vcloud\n"
-        
-        # CPU
-        mhz_core = vcd_client.one_host["TEMPLATE/CPUSPEED"].to_i
-        str_info << "CPUSPEED=" << mhz_core.to_s  << "\n"
+		str_info = ""
+		# System
+		str_info << "HYPERVISOR=vcloud\n"
+		
+		# CPU
+		mhz_core = vcd_client.one_host["TEMPLATE/CPUSPEED"].to_i
+		str_info << "CPUSPEED=" << mhz_core.to_s  << "\n"
         
         cpu   = vcd_client.one_host["TEMPLATE/CPU"]
 
@@ -312,11 +369,11 @@ class VCloudHost < ::OpenNebula::Host
             cpu = summary.cpu_limit.to_i
         end
 
-        str_info << "TOTALCPU=" << (cpu / mhz_core * 100).to_s << "\n"
-        str_info << "USEDCPU="  << (summary.cpu_used.to_i / mhz_core * 100).to_s << "\n"
-        str_info << "FREECPU="  << (summary.cpu_available.to_i / mhz_core * 100).to_s << "\n"
+		str_info << "TOTALCPU=" << (cpu / mhz_core * 100).to_s << "\n"
+		str_info << "USEDCPU="  << (summary.cpu_used.to_i / mhz_core * 100).to_s << "\n"
+		str_info << "FREECPU="  << (summary.cpu_available.to_i / mhz_core * 100).to_s << "\n"
 
-        # Memory
+		# Memory
         memory   = vcd_client.one_host["TEMPLATE/MEMORY"]
 
         if !memory.nil? and memory == "UNLIMITED"
@@ -325,10 +382,10 @@ class VCloudHost < ::OpenNebula::Host
             memory = summary.memory_limit.to_i
         end
 
-        str_info << "TOTALMEMORY=" << (memory * 1024).to_s << "\n"
-        str_info << "FREEMEMORY="  << (summary.memory_available.to_i * 1024).to_s << "\n"
-        str_info << "USEDMEMORY="  << (summary.memory_used.to_i * 1024).to_s
-    end
+		str_info << "TOTALMEMORY=" << (memory * 1024).to_s << "\n"
+		str_info << "FREEMEMORY="  << (summary.memory_available.to_i * 1024).to_s << "\n"
+		str_info << "USEDMEMORY="  << (summary.memory_used.to_i * 1024).to_s
+	end
 
     ###################################################################################################
     # Generate an OpenNebula monitor string for the VMs in this host. 
@@ -339,10 +396,11 @@ class VCloudHost < ::OpenNebula::Host
     #  POLL         =>  The information of the vApp (STATE,USED_CPU,USED_MEMORY,IPs,OS,VMTOOLS_VERSION)
     ###################################################################################################
     def monitor_vms
-
+    
         str_info = ""
 
         begin
+
             @vdc.vapps.each { |vapp|            
                 name = vapp.name                                
                 number = -1
@@ -350,7 +408,7 @@ class VCloudHost < ::OpenNebula::Host
                 matches = name.match(/^one-(\d*)(-(.*))?$/)
                 number  = matches[1] if matches
                 vapp.vms.each { |v|
-                    vm = VCloudVm.new(@vcd_connection,v)                    
+                    vm = VCloudVm.new(@vcd_client,@vdc,v)                    
                     vm.monitor
                     str_info << "\nVM = ["                
                     str_info << "ID=#{number},"
@@ -386,8 +444,8 @@ class VCloudHost < ::OpenNebula::Host
         password = client.encrypt_password(client.pass)
 
         template =  "HYPERVISOR=\"vcloud\"\n"
-        template =  "PUBLIC_CLOUD=\"YES\"\n"
-        template =  "CPUSPEED=\"1500\"\n"                  
+        template << "PUBLIC_CLOUD=\"YES\"\n"
+        template << "CPUSPEED=\"1500\"\n"                  
         template << "VCLOUD_URI=\"#{client.host}\"\n"
         template << "VCLOUD_PASSWORD=\"#{password}\"\n"
         template << "VCLOUD_VDC=\"#{vdc.name}\"\n"
@@ -422,13 +480,15 @@ class VCloudVm
 
     ###################################################################################################
     #  Creates a new VIVm using a RbVmomi::VirtualMachine object
-    #    @param client [VCenterClient] client to connect to vCenter
-    #    @param vm_vi [RbVmomi::VirtualMachine] it will be used if not nil
+    #    @param client  [VCloudSdk::Client] client to connect to vCloud
+    #    @param vdc_ci  [VCloudSdk::VDC] VDC where the VM is running.
+    #    @param vm_vi   [VCloudSdk::VM] it will be used if not nil
     ###################################################################################################
-    def initialize(client, vm_vi )
-        @vm     = vm_vi
+    def initialize(client,vdc_ci, vm_vi )
         @client = client
-
+        @vdc_ci = vdc_ci
+        @vm     = vm_vi       
+  
         @used_cpu    = 0
         @used_memory = 0
 
@@ -461,8 +521,9 @@ class VCloudVm
         @guest_ip_addresses        = @vm.ip_address.nil? ? "--" : @vm.ip_address
 
         @guest_ip                  = @guest_ip.first  if @guest_ip 
-        @guest_ip_addresses        = @guest_ip_addresses.join(',') if !@vm.ip_address.nil?
-        
+
+        @guest_ip_addresses        = (@guest_ip_addresses << VCDConnection::public_ip(@vm,@vdc_ci).first).join(',') if !@vm.ip_address.nil?
+
         @os                        = @vm.operating_system.delete(' ')
         @vmtools_ver               = @vm.vmtools_version
         @disks                     = @vm.internal_disks
@@ -545,11 +606,11 @@ class VCloudVm
                 connection  = VCDConnection.new(hid)
                 vapp        = connection.find_vapp(deploy_id)                               
                                                                 
-                vapp.power_off if vapp.status == "POWERED_ON"            
+                vapp.power_off if vapp.status == "POWERED_ON"
 
-                #REMOVE FW RULES
-                ips = vapp.vms.first.ip_address       
+                ips = VCDConnection::public_ip(vapp.vms.first,connection.vdc_ci)       
                 connection.vdc_ci.edge_gateways.first.remove_fw_rules(ips) if !ips.nil?
+                connection.vdc_ci.edge_gateways.first.remove_nat_rules(ips) if !ips.nil?
 
                 vapp.delete
             else 
@@ -642,11 +703,12 @@ class VCloudVm
         case lcm_state
             when "SHUTDOWN"                
                 vapp.shutdown if vapp.vms.first.vmtools_version != "9227"                                             
-                vapp.power_off
-                #detach_all_disks(vm) if keep_disks
+                vapp.power_off                
 
-                ips = vapp.vms.first.ip_address
+                #REMOVE FW & NAT RULES
+                ips = VCDConnection::public_ip(vapp.vms.first,connection.vdc_ci)       
                 connection.vdc_ci.edge_gateways.first.remove_fw_rules(ips) if !ips.nil?
+                connection.vdc_ci.edge_gateways.first.remove_nat_rules(ips) if !ips.nil?
 
                 vapp.delete                                
                 
@@ -654,8 +716,10 @@ class VCloudVm
                 vapp.shutdown if vapp.vms.first.vmtools_version != "9227"                         
                 vapp.power_off
 
-                ips = vapp.vms.first.ip_address
+                #REMOVE FW & NAT RULES
+                ips = VCDConnection::public_ip(vapp.vms.first,connection.vdc_ci)       
                 connection.vdc_ci.edge_gateways.first.remove_fw_rules(ips) if !ips.nil?
+                connection.vdc_ci.edge_gateways.first.remove_nat_rules(ips) if !ips.nil?
         end
     end   
 
@@ -721,9 +785,10 @@ class VCloudVm
         vm          = vapp.vms.first
         vm_one      = OpenNebula::VirtualMachine.new_with_id(vm_id,connection.one)
         vm_one.info
-
+      
         ip          = vm_one.retrieve_elements("/VM/TEMPLATE/NIC[MAC=\'#{mac}\']/IP").nil? ? nil : vm_one.retrieve_elements("/VM/TEMPLATE/NIC[MAC=\'#{mac}\']/IP").text
-        #Add network "bridge" to vApp                                                    
+        #Add network "bridge" to vApp
+                                                    
         vapp.add_network_by_name(bridge) if !vapp.list_networks.include? "#{bridge}"        
         
         #Attach NIC in mode "MANUAL" if a IP is retrieved, otherwise attach in mode "POOL"
@@ -735,16 +800,16 @@ class VCloudVm
 
         #Add firewall rule
         net_enrouted     = VCDConnection::network_enrouted(bridge)  
-        tcp_ports        = vm_one.retrieve_elements("/VM/TEMPLATE/CONTEXT/WHITE_TCP_PORTS").first        
+        tcp_ports        = vm_one.retrieve_elements("/VM/USER_TEMPLATE/CONTEXT/WHITE_TCP_PORTS").first              
             
-        if net_enrouted and !tcp_ports.nil?
-            nic   = vm.find_nic_by_mac(mac)
+        if net_enrouted and !tcp_ports.nil?            
             ports = tcp_ports.split(",") 
-            ip_address    = []
-            ip_address << nic.ip_address
-
-            configure_firewall(connection,vapp.name,ip_address,ports,only_add=true) if !ip_address.empty?
-        end
+            public_address   = VCDConnection::public_ip(vm,connection.vdc_ci)
+            enrouted_address = enrouted_ip(vm)
+            configure_firewall(connection,vapp.name,public_address,ports) if !public_address.empty?
+            public_net = connection.vdc_ci.edge_gateways.first.public_net_name
+            configure_nat(connection,vapp.name,enrouted_address.first,public_address.first,public_net,ports) if !public_address.empty? or !enrouted_address.empty?
+        end                 
     end
 
     ###################################################################################################
@@ -766,16 +831,13 @@ class VCloudVm
                 else
                     vm.power_off
                 end
-                vm.delete_nics(nic)
-                vm.power_on
-            else
-                vm.delete_nics(nic)
             end
-
-            ###Remove firewall Rules
-            ip_address = []
-            ip_address << nic.ip_address
-            connection.vdc_ci.edge_gateways.first.remove_fw_rules(ip_address) if !ip_address.empty?
+          
+            ips = VCDConnection::public_ip(vm,connection.vdc_ci)       
+            connection.vdc_ci.edge_gateways.first.remove_fw_rules(ips) if !ips.nil?
+            connection.vdc_ci.edge_gateways.first.remove_nat_rules(ips) if !ips.nil?
+            vm.delete_nics(nic)
+            vm.power_on            
         end
     end
 
@@ -859,7 +921,7 @@ class VCloudVm
     ###################################################################################################
     def self.clone_vm(xml_text, hostname)
 
-         xml = REXML::Document.new xml_text        
+        xml = REXML::Document.new xml_text        
         pcs = xml.root.get_elements("//USER_TEMPLATE/PUBLIC_CLOUD")
 
         raise "Cannot find VCloud element in VM template." if pcs.nil?
@@ -920,7 +982,7 @@ class VCloudVm
     ###################################################################################################
     # Obtain OS's type of the vApp Template.
     #  @param   template  [VCloudSdk::CatalogItem]   The vApp template.
-    ###################################################################################################   
+    ################################################################################################### 
     def self.obtain_OS(template)
 
         os = template.vapp_template.operating_system.downcase
@@ -943,13 +1005,8 @@ class VCloudVm
             return "OTHER"
         end
     end
-
-    ###################################################################################################
-    # Obtain the list of VM's IP belonging to networks enrouted by vShield.
-    #  @param   vm  [VCloudSdk::VM]   The VM.
-    #  @return      [Array]           The list of the IP's enrouted by vShield.
-    ###################################################################################################   
-    def self.ips_enrouted(vm)
+   
+    def self.enrouted_ip(vm)
         nics = vm.nics
         ip_address = []
             nics.each do |nic|                
@@ -957,7 +1014,7 @@ class VCloudVm
                 ip               = nic.ip_address
                 net_enrouted     = VCDConnection::network_enrouted(network)                 
                 if net_enrouted and !ip.nil? #ONLY ADD IPs ENROUTED BY VSHIELD
-                    ip_address << ip 
+                    ip_address << ip
                 end
             end
         ip_address
@@ -1028,7 +1085,7 @@ class VCloudVm
         ports.each do |port|
             ip_address.each do |ip|                               
                 rule = {
-                    :name => "#{vapp_name} - #{ip}:#{port}",
+                    :name => vapp_name,
                     :ip_src => "Any",
                     :ip_dest => ip,
                     :port_src => "Any",
@@ -1042,6 +1099,37 @@ class VCloudVm
         end 
         connection.vdc_ci.edge_gateways.first.remove_fw_rules(ip_address) if !only_add         
         connection.vdc_ci.edge_gateways.first.add_fw_rules(rules)
+    end
+
+    def self.configure_nat(connection,vapp_name,internal_address,external_address,external_network,ports,only_add=false)
+        rules = []
+        snat = {
+                :description => vapp_name,
+                :rule_type => "SNAT",
+                :enabled => "true",
+                :interface => external_network,             
+                :original_ip => internal_address,
+                :translated_ip => external_address
+        }
+
+        rules.push(snat)
+
+        ports.each do |port|            
+            dnat = {
+                :description => vapp_name,
+                :rule_type => "DNAT",
+                :enabled => "true",
+                :interface => external_network,
+                :original_ip => external_address,
+                :translated_ip => internal_address,
+                :original_port => port,
+                :translated_port => port,
+                :protocol => "tcp"
+            }
+            rules.push(dnat)
+        end                
+        connection.vdc_ci.edge_gateways.first.remove_nat_rules(["#{internal_address}"]) if !only_add
+        connection.vdc_ci.edge_gateways.first.add_nat_rules(rules)
     end
 
     ###################################################################################################
@@ -1090,42 +1178,49 @@ class VCloudVm
         
         vm.reconfigure(options_vm)
 
-        #FIREWALL CONFIGURATION
+        #FIREWALL && NAT CONFIGURATION
         nics = vm.nics
         if !nics.nil? and !ports.nil?
-            ip_address = ips_enrouted(vm)
-            configure_firewall(connection,vApp_name,ip_address,ports) if !ip_address.empty?
+            public_address   = VCDConnection::public_ip(vm,connection.vdc_ci)
+            enrouted_address = enrouted_ip(vm)
+            configure_firewall(connection,vApp_name,public_address,ports) if !public_address.empty?
+            public_net = connection.vdc_ci.edge_gateways.first.public_net_name
+            configure_nat(connection,vApp_name,enrouted_address.first,public_address.first,public_net,ports) if !public_address.empty? or !enrouted_address.empty?
         end               
     end
 
     ###################################################################################################
     # Attach disk to a VM
-    # @params hostname[String] vcenter cluster name in opennebula as host
-    # @params deploy_id[String] deploy id of the vm
-    # @params ds_name[String] name of the datastore
-    # @params img_name[String] path of the image
-    # @params size_kb[String] size in kb of the disk
-    # @params vm[RbVmomi::VIM::VirtualMachine] VM if called from instance
-    # @params connection[ViClient::conneciton] connection if called from instance
+    # @params hostname  [String] vcenter cluster name in opennebula as host.
+    # @params deploy_id [String] deploy id of the vm.
+    # @params disk_id   [String] Id of the disk.
+    # @params size_mb   [String] size in mb of the disk.
     ###################################################################################################
-    def self.attach_disk(hostname, deploy_id, ds_name,img_name, size_mb, vapp=nil, connection=nil)
-        #NOT IMPLEMENTED YET
-        return true
+    def self.attach_disk(hostname,deploy_id,disk_id,size_mb)                    
+        hid         = VCDConnection::translate_hostname(hostname)
+        connection  = VCDConnection.new(hid)
+        vapp        = connection.find_vapp(deploy_id)
+        vm          = vapp.vms.first        
+        
+        vm.create_internal_disk(size_mb.to_i,"scsi","lsilogic",disk_id)
     end
 
     ###################################################################################################
     # Detach a specific disk from a VM
     # Attach disk to a VM
-    # @params hostname  [String] vcenter cluster name in opennebula as host
-    # @params deploy_id [String] deploy id of the vm
-    # @params ds_name   [String] name of the datastore
-    # @params img_path  [String] path of the image
+    # @params hostname  [String] vcenter cluster name in opennebula as host.
+    # @params deploy_id [String] deploy id of the vm.
+    # @params disk_id   [String] Id of the disk.
     ###################################################################################################
-    def self.detach_disk(hostname, deploy_id, ds_name, img_path)
-        #NOT IMPLEMENTED YET
-        return true
+    def self.detach_disk(hostname, deploy_id,disk_id)
+        hid         = VCDConnection::translate_hostname(hostname)
+        connection  = VCDConnection.new(hid)
+        vapp        = connection.find_vapp(deploy_id)
+        vm          = vapp.vms.first        
+        
+        vm.delete_internal_disk_by_id(disk_id)
     end
-  
+
     ###################################################################################################
     # Obtains the customization script for the Virtual Machine
     #  @params context [XML] The ONE template's context
