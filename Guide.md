@@ -132,7 +132,10 @@ As a root:
 
 ### 2.Download and install the gem
 
-	gem install ruby_vcloud_sdk-[current_version].gem
+  There are two gems, one for vCloud Director 5.5 and other for vCloud Director 8
+  Install the specific gem for your vCloud Director version
+
+	gem install ruby_vcloud_sdk[vcloud_director_version]-[current_gem_version].gem
 
 
 ## IMPORT HOSTS,TEMPLATES, NETWORKS AND DATASTORE USING ONEVCLOUD SCRIPT

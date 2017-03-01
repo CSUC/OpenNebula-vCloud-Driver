@@ -32,21 +32,36 @@ echo "Finished copying files"
 
 echo "Installing gem dependences...."
 
-apt-get update
+if [ -n "`command -v apt-get`" ]; then
+    MANAGER=apt-get
+    $MANAGER update
+else
+    MANAGER=yum
+fi
 
-apt-get install -y make g++ ruby-dev zlib1g-dev liblzma-dev
+$MANAGER install -y make g++ ruby-dev zlib1g-dev liblzma-dev
 
 echo "Dependences installed"
 
+echo "Introduce your vCloud Director version: "
+echo "1. vCloud Director 5.5"
+echo "2. vCloud Director 8"
+
+read version
+
 echo "Installing gem...."
 
-gem install ruby_vcloud_sdk-*.gem 
+if [ $version -eq 2 ]; then
+    gem install ruby_vcloud8_sdk-*.gem 
+else
+    gem install ruby_vcloud5.5_sdk-*.gem 
+fi
 
 echo "Finished gem installation"
 
 echo "Finished installing driver actions"
   
-  if [ -z "$(grep -i vCloud /etc/one/oned.conf)" ]; then
+if [ -z "$(grep -i vCloud /etc/one/oned.conf)" ]; then
     echo ""
     echo "================================================================="
     echo "          vCloud Driver not found in /etc/one/oned.conf"

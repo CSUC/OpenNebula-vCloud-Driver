@@ -277,37 +277,6 @@ class VCDConnection
     ######################### Datastore Operations ####################################################
 
     ###################################################################################################
-    # Create a VirtualDisk
-    # @param img_name [String] name of the image
-    # @param ds_name  [String] name of the datastore on which the VD will be
-    #                         created
-    # @param size     [String] size of the new image in MB
-    # @param adapter_type [String] as described in
-    #   http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.wssdk.apiref.doc/vim.VirtualDiskManager.VirtualDiskAdapterType.html
-    # @param disk_type [String] as described in
-    #   http://pubs.vmware.com/vsphere-60/index.jsp?topic=%2Fcom.vmware.wssdk.apiref.doc%2Fvim.VirtualDiskManager.VirtualDiskType.html
-    # @return name of the final image
-    ############################################################################
-    def create_virtual_disk(img_name, ds_name, size, adapter_type, disk_type)
-        #NOT IMPLEMENTED YET
-        #return true
-        @vdc_ci.create_disk(img_name,size.to_i)
-
-        "#{img_name}.vmdk"
-    end
-
-    ###################################################################################################
-    # Delete a VirtualDisk
-    # @param img_name [String] name of the image
-    # @param ds_name  [String] name of the datastore where the VD resides
-    ###################################################################################################
-    def delete_virtual_disk(img_name, ds_name)
-        #NOT IMPLEMENTED YET
-        #return true 
-        @vdc_ci.delete_disk_by_name(img_name)       
-    end
-
-    ###################################################################################################
     # Returns Datastore information
     # @param    ds_name [String] name of the datastore
     # @return           [String] monitor information of the DS
@@ -608,9 +577,9 @@ class VCloudVm
                                                                 
                 vapp.power_off if vapp.status == "POWERED_ON"
 
-                ips = VCDConnection::public_ip(vapp.vms.first,connection.vdc_ci)       
-                connection.vdc_ci.edge_gateways.first.remove_fw_rules(ips) if !ips.nil?
-                connection.vdc_ci.edge_gateways.first.remove_nat_rules(ips) if !ips.nil?
+                #ips = VCDConnection::public_ip(vapp.vms.first,connection.vdc_ci)       
+                #connection.vdc_ci.edge_gateways.first.remove_fw_rules(ips) if !ips.nil?
+                #connection.vdc_ci.edge_gateways.first.remove_nat_rules(ips) if !ips.nil?
 
                 vapp.delete
             else 
@@ -706,9 +675,9 @@ class VCloudVm
                 vapp.power_off                
 
                 #REMOVE FW & NAT RULES
-                ips = VCDConnection::public_ip(vapp.vms.first,connection.vdc_ci)       
-                connection.vdc_ci.edge_gateways.first.remove_fw_rules(ips) if !ips.nil?
-                connection.vdc_ci.edge_gateways.first.remove_nat_rules(ips) if !ips.nil?
+                #ips = VCDConnection::public_ip(vapp.vms.first,connection.vdc_ci)       
+                #connection.vdc_ci.edge_gateways.first.remove_fw_rules(ips) if !ips.nil?
+                #connection.vdc_ci.edge_gateways.first.remove_nat_rules(ips) if !ips.nil?
 
                 vapp.delete                                
                 
@@ -717,9 +686,9 @@ class VCloudVm
                 vapp.power_off
 
                 #REMOVE FW & NAT RULES
-                ips = VCDConnection::public_ip(vapp.vms.first,connection.vdc_ci)       
-                connection.vdc_ci.edge_gateways.first.remove_fw_rules(ips) if !ips.nil?
-                connection.vdc_ci.edge_gateways.first.remove_nat_rules(ips) if !ips.nil?
+                #ips = VCDConnection::public_ip(vapp.vms.first,connection.vdc_ci)       
+                #connection.vdc_ci.edge_gateways.first.remove_fw_rules(ips) if !ips.nil?
+                #connection.vdc_ci.edge_gateways.first.remove_nat_rules(ips) if !ips.nil?
         end
     end   
 
@@ -799,17 +768,17 @@ class VCloudVm
         end
 
         #Add firewall rule
-        net_enrouted     = VCDConnection::network_enrouted(bridge)  
-        tcp_ports        = vm_one.retrieve_elements("/VM/USER_TEMPLATE/CONTEXT/WHITE_TCP_PORTS").first              
+        #net_enrouted     = VCDConnection::network_enrouted(bridge)  
+        #tcp_ports        = vm_one.retrieve_elements("/VM/USER_TEMPLATE/CONTEXT/WHITE_TCP_PORTS").first              
             
-        if net_enrouted and !tcp_ports.nil?            
-            ports = tcp_ports.split(",") 
-            public_address   = VCDConnection::public_ip(vm,connection.vdc_ci)
-            enrouted_address = enrouted_ip(vm)
-            configure_firewall(connection,vapp.name,public_address,ports) if !public_address.empty?
-            public_net = connection.vdc_ci.edge_gateways.first.public_net_name
-            configure_nat(connection,vapp.name,enrouted_address.first,public_address.first,public_net,ports) if !public_address.empty? or !enrouted_address.empty?
-        end                 
+        #if net_enrouted and !tcp_ports.nil?            
+            #ports = tcp_ports.split(",") 
+            #public_address   = VCDConnection::public_ip(vm,connection.vdc_ci)
+            #enrouted_address = enrouted_ip(vm)
+            #configure_firewall(connection,vapp.name,public_address,ports) if !public_address.empty?
+            #public_net = connection.vdc_ci.edge_gateways.first.public_net_name
+            #configure_nat(connection,vapp.name,enrouted_address.first,public_address.first,public_net,ports) if !public_address.empty? or !enrouted_address.empty?
+        #end                 
     end
 
     ###################################################################################################
@@ -833,9 +802,9 @@ class VCloudVm
                 end
             end
           
-            ips = VCDConnection::public_ip(vm,connection.vdc_ci)       
-            connection.vdc_ci.edge_gateways.first.remove_fw_rules(ips) if !ips.nil?
-            connection.vdc_ci.edge_gateways.first.remove_nat_rules(ips) if !ips.nil?
+            #ips = VCDConnection::public_ip(vm,connection.vdc_ci)       
+            #connection.vdc_ci.edge_gateways.first.remove_fw_rules(ips) if !ips.nil?
+            #connection.vdc_ci.edge_gateways.first.remove_nat_rules(ips) if !ips.nil?
             vm.delete_nics(nic)
             vm.power_on            
         end
@@ -965,9 +934,9 @@ class VCloudVm
                 }
                 vm_params.push(disk_opt)                
             end                     
-            
+ 
             vapp = catalog.instantiate_vapp_template(template.name,vdc_name,vApp_name,vApp_description,nil,nil,vm_params)
-       
+            
         rescue Exception => e
             raise "Cannot clone vApp Template #{e.message}"
         end
@@ -1137,6 +1106,7 @@ class VCloudVm
     ###################################################################################################
     def self.reconfigure_vm(vapp, xml, newvm, hostname,connection=nil)
         vm                  = vapp.vms.first
+
         ports               = xml.root.elements["/VM/TEMPLATE/CONTEXT/WHITE_TCP_PORTS"]
         ports               = ports.text.split(',') if !ports.nil?
         vmid                = xml.root.elements["/VM/ID"].text
@@ -1179,14 +1149,14 @@ class VCloudVm
         vm.reconfigure(options_vm)
 
         #FIREWALL && NAT CONFIGURATION
-        nics = vm.nics
-        if !nics.nil? and !ports.nil?
-            public_address   = VCDConnection::public_ip(vm,connection.vdc_ci)
-            enrouted_address = enrouted_ip(vm)
-            configure_firewall(connection,vApp_name,public_address,ports) if !public_address.empty?
-            public_net = connection.vdc_ci.edge_gateways.first.public_net_name
-            configure_nat(connection,vApp_name,enrouted_address.first,public_address.first,public_net,ports) if !public_address.empty? or !enrouted_address.empty?
-        end               
+        #nics = vm.nics
+        #if !nics.nil? and !ports.nil?
+            #public_address   = VCDConnection::public_ip(vm,connection.vdc_ci)
+            #enrouted_address = enrouted_ip(vm)
+            #configure_firewall(connection,vApp_name,public_address,ports) if !public_address.empty?
+            #public_net = connection.vdc_ci.edge_gateways.first.public_net_name
+            #configure_nat(connection,vApp_name,enrouted_address.first,public_address.first,public_net,ports) if !public_address.empty? or !enrouted_address.empty?
+        #end               
     end
 
     ###################################################################################################
