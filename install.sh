@@ -15,6 +15,7 @@ CP=/bin/cp
 MKDIR=/bin/mkdir
 CHOWN=/bin/chown
 CHMOD=/bin/chmod
+TOUCH=/bin/touch
 
 echo "copying files...."
 
@@ -29,6 +30,14 @@ $CHOWN -R oneadmin:oneadmin /var/lib/one/remotes/vmm/vcloud /var/lib/one/remotes
 $CHMOD -R +x /var/lib/one/remotes/vmm/vcloud /var/lib/one/remotes/im/vcloud.d /var/lib/one/remotes/datastore/vcloud /var/lib/one/remotes/hooks/dv
 
 echo "Finished copying files"
+
+echo "Creating log files"
+
+$TOUCH /var/lib/one/vcloud.log
+$CHOWN oneadmin:oneadmin /var/lib/one/vcloud.log
+
+$TOUCH /var/lib/one/rest
+$CHOWN oneadmin:oneadmin /var/lib/one/rest
 
 echo "Installing gem dependences...."
 

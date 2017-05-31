@@ -277,6 +277,37 @@ class VCDConnection
     ######################### Datastore Operations ####################################################
 
     ###################################################################################################
+    # Create a VirtualDisk
+    # @param img_name [String] name of the image
+    # @param ds_name  [String] name of the datastore on which the VD will be
+    #                         created
+    # @param size     [String] size of the new image in MB
+    # @param adapter_type [String] as described in
+    #   http://pubs.vmware.com/vsphere-60/index.jsp#com.vmware.wssdk.apiref.doc/vim.VirtualDiskManager.VirtualDiskAdapterType.html
+    # @param disk_type [String] as described in
+    #   http://pubs.vmware.com/vsphere-60/index.jsp?topic=%2Fcom.vmware.wssdk.apiref.doc%2Fvim.VirtualDiskManager.VirtualDiskType.html
+    # @return name of the final image
+    ############################################################################
+    def create_virtual_disk(img_name, ds_name, size, adapter_type, disk_type)
+        #NOT IMPLEMENTED YET
+        #return true
+        @vdc_ci.create_disk(img_name,size.to_i)
+
+        "#{img_name}.vmdk"
+    end
+
+    ###################################################################################################
+    # Delete a VirtualDisk
+    # @param img_name [String] name of the image
+    # @param ds_name  [String] name of the datastore where the VD resides
+    ###################################################################################################
+    def delete_virtual_disk(img_name, ds_name)
+        #NOT IMPLEMENTED YET
+        #return true 
+        @vdc_ci.delete_disk_by_name(img_name)       
+    end
+
+    ###################################################################################################
     # Returns Datastore information
     # @param    ds_name [String] name of the datastore
     # @return           [String] monitor information of the DS
@@ -768,17 +799,17 @@ class VCloudVm
         end
 
         #Add firewall rule
-        #net_enrouted     = VCDConnection::network_enrouted(bridge)  
-        #tcp_ports        = vm_one.retrieve_elements("/VM/USER_TEMPLATE/CONTEXT/WHITE_TCP_PORTS").first              
+        net_enrouted     = VCDConnection::network_enrouted(bridge)  
+        tcp_ports        = vm_one.retrieve_elements("/VM/USER_TEMPLATE/CONTEXT/WHITE_TCP_PORTS").first              
             
-        #if net_enrouted and !tcp_ports.nil?            
+        if net_enrouted and !tcp_ports.nil?            
             #ports = tcp_ports.split(",") 
             #public_address   = VCDConnection::public_ip(vm,connection.vdc_ci)
             #enrouted_address = enrouted_ip(vm)
             #configure_firewall(connection,vapp.name,public_address,ports) if !public_address.empty?
             #public_net = connection.vdc_ci.edge_gateways.first.public_net_name
             #configure_nat(connection,vapp.name,enrouted_address.first,public_address.first,public_net,ports) if !public_address.empty? or !enrouted_address.empty?
-        #end                 
+        end                 
     end
 
     ###################################################################################################
@@ -923,17 +954,28 @@ class VCloudVm
             vdc_name            = connection.vdc
             vApp_description    = "vApp instantiated by OpenNebula by user #{user}" 
 
-            disks        = xml.root.get_elements("/VM/TEMPLATE/DISK[DISK_ID='0']")  
-            vm_params = []
+            disks               = xml.root.get_elements("/VM/TEMPLATE/DISK[DISK_ID='0']") 
+            storage_profile     = xml.root.get_elements("//USER_TEMPLATE/STORAGE_PROFILE").first.text if !xml.root.get_elements("//USER_TEMPLATE/STORAGE_PROFILE").empty?
+
+            sp_link             = nil 
+            disk_conf           = nil
+
+            if !storage_profile.nil? and connection.vdc_ci.storage_profile_exists?(storage_profile)
+                sp_link         = connection.vdc_ci.find_storage_profile_by_name(storage_profile).href  
+            end                     
 
             if !disks.nil?         
                 disk_id = disks.first.elements["DISK_ID"].text                           
-                disk_opt = {
+                disk_conf = {
                     :id   => disk_id,                                  
                     :size => disks.first.elements["SIZE"].text
-                }
-                vm_params.push(disk_opt)                
-            end                     
+                }                                     
+            end
+
+            vm_params = {
+               :disk_opt => disk_conf,       
+               :storage_profile => sp_link
+            }                                 
  
             vapp = catalog.instantiate_vapp_template(template.name,vdc_name,vApp_name,vApp_description,nil,nil,vm_params)
             
@@ -1149,14 +1191,14 @@ class VCloudVm
         vm.reconfigure(options_vm)
 
         #FIREWALL && NAT CONFIGURATION
-        #nics = vm.nics
-        #if !nics.nil? and !ports.nil?
+        nics = vm.nics
+        if !nics.nil? and !ports.nil?
             #public_address   = VCDConnection::public_ip(vm,connection.vdc_ci)
             #enrouted_address = enrouted_ip(vm)
             #configure_firewall(connection,vApp_name,public_address,ports) if !public_address.empty?
             #public_net = connection.vdc_ci.edge_gateways.first.public_net_name
             #configure_nat(connection,vApp_name,enrouted_address.first,public_address.first,public_net,ports) if !public_address.empty? or !enrouted_address.empty?
-        #end               
+        end               
     end
 
     ###################################################################################################

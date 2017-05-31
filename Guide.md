@@ -187,10 +187,11 @@ The first step is import to OpenNebula the resources hosted in vCloud using the 
 
 During the instanciation, vcloud driver takes some variables from the template to configure capabilities such as CUSTOMIZATION. If this variables are not in the template, the capabilities won't be configured correctly. Please add or modify the variables that you need.
 
-* CUSTOMIZATION = "YES"               The DEFAULT value is NO. If you want to activate customization, change the value to "YES".
-* OS = "LINUX | WINDOWS | OTHER"      Check this variable and modify the value for the OS of the template. This value is important because is used during the customization process.
-* WHITE_TCP_PORTS = "PORT,PORT,..."   If you add coma-separated TCP port numbers, during the instanciation the driver will open that ports in the vShield. Only if the network is
-                                      enrouted by vShield.
+* CUSTOMIZATION = "YES"                     The DEFAULT value is NO. If you want to activate customization, change the value to "YES".
+* OS = "LINUX | WINDOWS | OTHER"            Check this variable and modify the value for the OS of the template. This value is important because is used during the customization process.
+* WHITE_TCP_PORTS = "PORT,PORT,..."         If you add coma-separated TCP port numbers, during the instanciation the driver will open that ports in the vShield. Only if the network is
+                                            enrouted by vShield.
+* STORAGE_PROFILE = "STORAGE_PROFILE_NAME"  You can select the storage profile. If you don't select anyone, the vm will be storaged in the default storage profile defined in vcloud vapp template.
  
 ### USER'S CONTEXT VARIABLES
 

@@ -21,6 +21,8 @@
 ###V0.3 Beta (2016-12-15)
 * It's able to:
 	* Cold Attach & detach volatile disks to VM's
+    * Resize disks during the instantiation
+    * Select the profile storage
 
 ###TODO
 

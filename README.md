@@ -22,8 +22,10 @@ This addon has the following capabilities:
 * Create, delete and revert snapshots of VM's.
 * Change RAM and CPU values of VM.
 * It's able to hot-attach and detach NICs to VM's.
-* Attach disks to VM. Now, during the deployment process only.
+* Attach disks to VM, only in cold.
+* Resize disks during the instantiation. Only increase the size, not decrease.
 * Automatized customization of the VMs instanciated.
+* It's able to choose wich storage profile will be storaged the VM's disk or disks.
 * Port filtering via vShield during the VM instanciation.
 * Obtain monitoring information from the VDC, Datastore and VM's.
 * In this development version we manage vApps with one VMs inside (A VM in OpenNebula equals a vApp with one VM in vCloud).
