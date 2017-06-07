@@ -203,4 +203,27 @@ If you activate the customization and the template supports it, during the insta
 
 If you add a Public SSH Key for that user, it will be added to the Linux VM during its instanciation.
 
+### ATTACH DISKS
+
+To attach disk you must indicate the options disk in the VM template
+
+  DISK = [
+    DISK_ID = "1",
+    SIZE = "51200",
+    TYPE = "fs" 
+  ]
+
+  DISK_ID = Specify a id to this disk, each disk id must be different.
+  SIZE = The disk size in MB
+  TYPE = Indicate "fs"
+
+### DETACH DISKS
+
+  The detach disk option is disabled. OpenNebula can attach disk to vCloud vApp, but can not detach disks. This option is disabled to avoid accidentally removes.
+  If you want to enable de detach option, you can activate it uncommenting some lines in the ruby_vcloud_sdk library.
+
+  Open /var/lib/gems/1.9.1/gems/ruby_vcloud_sdk-[last_version]/lib/ruby_vcloud_sdk/vm.rb and go to line 254. Remove the =begin and =end clauses. Save it.
+
+  Now if you remove a disk in OpenNebula, the changes will take effect in vCloud vApp associated.
+
 ## FAQ

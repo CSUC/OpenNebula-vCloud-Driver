@@ -22,7 +22,7 @@ This addon has the following capabilities:
 * Create, delete and revert snapshots of VM's.
 * Change RAM and CPU values of VM.
 * It's able to hot-attach and detach NICs to VM's.
-* Attach disks to VM, only in cold.
+* Attach disks to VM, only in cold. To avoid accidental disk remove, the detach disk option is disabled in OpenNebula. If you want enable this option, see Guide section.
 * Resize disks during the instantiation. Only increase the size, not decrease.
 * Automatized customization of the VMs instanciated.
 * It's able to choose wich storage profile will be storaged the VM's disk or disks.
