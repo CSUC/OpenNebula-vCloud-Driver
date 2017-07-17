@@ -46,20 +46,20 @@ contributed under the Apache License 2.0.
 
 ## Documentation
 
- * [http://docs-vcloud.readthedocs.io/en/latest/index.html] (http://docs-vcloud.readthedocs.io/en/latest/index.html)
+ * [http://docs-vcloud.readthedocs.io/en/latest/index.html](http://docs-vcloud.readthedocs.io/en/latest/index.html)
 
 More info: 
 
-* [How to Contribute] (http://opennebula.org/software:addons#how_to_contribute_to_an_existing_add-on) 
+* [How to Contribute](http://opennebula.org/software:addons#how_to_contribute_to_an_existing_add-on) 
 * Support: [OpenNebula user forum](https://forum.opennebula.org/c/support)
 * Development: [OpenNebula developers forum](https://forum.opennebula.org/c/development)
-* Issues Tracking: [Github issues] (https://github.com/OpenNebula/addon-vcloud-driver/issues)
+* Issues Tracking: [Github issues](https://github.com/OpenNebula/addon-vcloud-driver/issues)
 
 ## Authors
 
 Leaders: Miguel Ángel Flores (miguel.angel.flores@csuc.cat), Xavier Peralta (xavier.peralta@csuc.cat), Arnau Colominas (arnau.colominas@csuc.cat)
 
-[CSUC - Consorci de Serveis Universitaris de Catalunya] (http://www.csuc.cat)
+[CSUC - Consorci de Serveis Universitaris de Catalunya](http://www.csuc.cat)
 
 ## Compatibility
 
@@ -69,8 +69,8 @@ Leaders: Miguel Ángel Flores (miguel.angel.flores@csuc.cat), Xavier Peralta (xa
 	* Debian 8
 	* CentOS 7
 * vCloud Director versions tested:
-    * 5.5 [+Info] (https://developercenter.vmware.com/web/sdk/5.5.0/vcloud-api)
-    * 8 [+Info] (http://pubs.vmware.com/vcd-810/index.jsp)
+    * 5.5 [+Info](https://developercenter.vmware.com/web/sdk/5.5.0/vcloud-api)
+    * 8 [+Info](http://pubs.vmware.com/vcd-810/index.jsp)
 
 ## Installation, Configuration and Usage
 
@@ -78,8 +78,8 @@ Use [this guide](Guide.md)
 
 ## References
 
-[CSUC] (http://www.csuc.cat)  [OpenNebula] (http://opennebula.org/)
+[CSUC](http://www.csuc.cat)  [OpenNebula](http://opennebula.org/)
 
 ## License
 
-[Apache 2.0] (LICENSE)
+[Apache 2.0](LICENSE)

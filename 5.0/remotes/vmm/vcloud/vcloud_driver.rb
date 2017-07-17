@@ -785,6 +785,13 @@ class VCloudVm
         end
     end
 
+    def self.vm_to_one(vm)
+        xml = ""
+        xml << "<VM>\n"      
+        xml << "</VM>\n"
+        
+    end
+
     ###################################################################################################
     # Converts a vCloud vApp template object to a ONE template.
     #  @param template     [VCloudSdk::Catalog_Item] The template object.
