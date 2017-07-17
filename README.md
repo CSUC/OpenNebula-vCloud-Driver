@@ -44,6 +44,10 @@ To contribute bug patches or new features, you can use the github
 Pull Request model. It is assumed that code and documentation are 
 contributed under the Apache License 2.0. 
 
+## Documentation
+
+ * [http://docs-vcloud.readthedocs.io/en/latest/index.html] (http://docs-vcloud.readthedocs.io/en/latest/index.html)
+
 More info: 
 
 * [How to Contribute] (http://opennebula.org/software:addons#how_to_contribute_to_an_existing_add-on) 

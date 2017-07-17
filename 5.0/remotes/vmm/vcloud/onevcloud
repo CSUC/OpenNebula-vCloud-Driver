@@ -535,8 +535,7 @@ end
                     if !vapp.name.start_with?("one-")
                          STDOUT.print "\nDo you want to import vApp #{vapp.name} [y/n]? "
 
-                         next if STDIN.gets.strip.downcase != 'y'
-
+                         next if STDIN.gets.strip.downcase != 'y'                     
                     end
                 end
                 STDOUT.print "done!\n"
