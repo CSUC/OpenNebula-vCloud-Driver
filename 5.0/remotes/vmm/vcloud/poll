@@ -33,7 +33,7 @@ host      = ARGV[1]
 host_id      = VCloudDriver::VCDConnection.translate_hostname(host)
 connection = VCloudDriver::VCDConnection.new(host_id)
 vm = connection.find_vm_template(deploy_id)
-vm = VCloudDriver::VCloudVm.new(connection,vm)
+vm = VCloudDriver::VCloudVm.new(connection,connection.vdc_ci,vm)
 
 vm.monitor
 

@@ -190,40 +190,66 @@ end
                     next
                 end
 
-                catalog.items.each{ |catalog_item|
-                    if catalog_item.type.include? "vAppTemplate"                        
-                        size = 0
-                        disks = catalog_item.vapp_template.disks
-                        disks.each do |disk|
-                            size += disk.capacity.to_i
+                STDOUT.print "\nDo you want to add all templates of #{catalog.name} [y/n]? "
+
+                res =  STDIN.gets.strip.downcase
+
+                if res == 'y'
+                    catalog.items.each{ |catalog_item|
+                        if catalog_item.type.include? "vAppTemplate"                        
+                            
+                            str = VCloudDriver::VCloudVm.to_one(catalog_item,catalog.name)
+
+                            one_t = ::OpenNebula::Template.new(
+                                    ::OpenNebula::Template.build_xml,connection.one)
+
+                            rc = one_t.allocate(str)
+
+                            if ::OpenNebula.is_error?(rc)                            
+                                STDOUT.puts "    Error creating template: #{rc.message}\n"
+                            else                                
+                                STDOUT.puts "    OpenNebula template #{catalog_item.name} created with id #{one_t.id}!\n"
+                            end
                         end
-                        size /= 1024
-                        STDOUT.print "\n  * VM Template found:\n"\
-                                     "      - Name   : #{catalog_item.name}\n"\
-                                     "      - UUID   : #{catalog_item.id}\n"
-                        STDOUT.print "      - Desc   : #{catalog_item.description}\n" if catalog_item.description != ""
-                        STDOUT.print "      - vApp Template ID   : #{catalog_item.vapp_template_id}\n"\
-                                     "      - Date created: #{catalog_item.date}\n"\
-                                     "      - Total Size: #{size} GB\n"\
-                                     "      - OS: #{catalog_item.vapp_template.operating_system}\n"\
-                                     "    Import this VM template [y/n]? "
+                    }
 
-                        next if STDIN.gets.strip.downcase != 'y'
+                else    
 
-                        str = VCloudDriver::VCloudVm.to_one(catalog_item,catalog.name)
+                    catalog.items.each{ |catalog_item|
+                        if catalog_item.type.include? "vAppTemplate"                        
+                            size = 0
+                            disks = catalog_item.vapp_template.disks
+                            disks.each do |disk|
+                                size += disk.capacity.to_i
+                            end
+                            size /= 1024
+                            STDOUT.print "\n  * VM Template found:\n"\
+                                         "      - Name   : #{catalog_item.name}\n"\
+                                         "      - UUID   : #{catalog_item.id}\n"
+                            STDOUT.print "      - Desc   : #{catalog_item.description}\n" if catalog_item.description != ""
+                            STDOUT.print "      - vApp Template ID   : #{catalog_item.vapp_template_id}\n"\
+                                         "      - Date created: #{catalog_item.date}\n"\
+                                         "      - Total Size: #{size} GB\n"\
+                                         "      - OS: #{catalog_item.vapp_template.operating_system}\n"\
+                                         "    Import this VM template [y/n]? "
 
-                        one_t = ::OpenNebula::Template.new(
-                                ::OpenNebula::Template.build_xml,connection.one)
+                            next if STDIN.gets.strip.downcase != 'y'
 
-                        rc = one_t.allocate(str)
+                            str = VCloudDriver::VCloudVm.to_one(catalog_item,catalog.name)
 
-                        if ::OpenNebula.is_error?(rc)                            
-                            STDOUT.puts "    Error creating template: #{rc.message}\n"
-                        else
-                            STDOUT.puts "    OpenNebula template #{one_t.id} created!\n"
+                            one_t = ::OpenNebula::Template.new(
+                                    ::OpenNebula::Template.build_xml,connection.one)
+
+                            rc = one_t.allocate(str)
+
+                            if ::OpenNebula.is_error?(rc)                            
+                                STDOUT.puts "    Error creating template: #{rc.message}\n"
+                            else
+                                STDOUT.puts "    OpenNebula template #{one_t.id} created!\n"
+                            end
                         end
-                    end
-                }
+                    }
+                end
                 STDOUT.print "done!\n"
             }
         rescue Exception => e
@@ -273,7 +299,7 @@ end
             else
 
                 rs.each { |net|                    
-                    #net.href
+                    
                     print_str =  "\n  * Network found:\n"\
                                  "      - Name    : #{net.name}\n"\
                                  "      - UUID    : #{net.id}\n"\
@@ -466,5 +492,62 @@ end
         end
 
         exit 0
-end
+    end
+
+    wilds_desc = <<-EOT.unindent
+        Import vCloud VM into OpenNebula
+    EOT
+
+    command :wilds, wilds_desc, :options=>[ VCLOUD, USER, PASS, VDC ] do
+        if  options[:vuser].nil? ||
+            options[:vpass].nil? ||
+            options[:vdc].nil? ||
+            options[:vcloud].nil?
+            STDERR.puts "vCloud connection parameters are mandatory to import"\
+                        " vNetworks:\n"\
+                        "\t --vcloud vCloud hostname\n"\
+                        "\t --vuser username to login in vCloud\n"\
+                        "\t --vpass password for the user\n"\
+                        "\t --vdc virtual data center of vCloud"
+            exit -1
+        end
+
+        begin
+            STDOUT.print "\nConnecting to vCloud: #{options[:vcloud]}..."
+
+            connection = VCloudDriver::VCDConnection.new_connection(
+                    :user     => options[:vuser],
+                    :password => options[:vpass],
+                    :host     => options[:vcloud], 
+                    :org      => options[:vuser].gsub(/^.*\@/, ""),
+                    :vdc      => options[:vdc])
+
+            STDOUT.print "done!\n\n"
+
+            STDOUT.print "Looking for vCloud VM..."
+
+            rs = connection.vcd_connection.find_vdc_by_name(options[:vdc]).vapps
+            if rs.empty?
+                    STDOUT.print "    No vm found in #{options[:vdc]}...\n\n"
+                    
+            else                
+                rs.each do |vapp|
+                    if !vapp.name.start_with?("one-")
+                         STDOUT.print "\nDo you want to import vApp #{vapp.name} [y/n]? "
+
+                         next if STDIN.gets.strip.downcase != 'y'
+
+                    end
+                end
+                STDOUT.print "done!\n"
+
+            end                   
+
+        rescue Exception => e
+            STDOUT.puts "error: #{e.message}"
+            exit -1
+        end
+
+        exit 0
+    end
 end
