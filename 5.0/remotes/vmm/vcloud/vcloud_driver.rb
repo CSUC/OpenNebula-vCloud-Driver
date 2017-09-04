@@ -193,6 +193,13 @@ class VCDConnection
         return network.first.id
     end
 
+    def self.get_id_network(network)
+        net_id      = VCDConnection::translate_network(network)
+        net_one     = OpenNebula::VirtualNetwork.new_with_id(net_id,::OpenNebula::Client.new())
+        net_one.info
+        return net_one.retrieve_elements("/VNET/TEMPLATE/UUID").first
+    end
+
     ###################################################################################################
     # Obtain if the network is enrouted by a vShield.
     #  @param   network  [String]   The name of the network.
@@ -452,13 +459,18 @@ class VCloudVm
     ###################################################################################################
     def monitor  
         @state   = state_to_c(@vm.status)
+        @guest_ip_addresses        = @vm.ip_address.nil? ? "--" : @vm.ip_address       
+
+        @os                        = @vm.operating_system.delete(' ')
+        @vmtools_ver               = @vm.vmtools_version
+        @disks                     = @vm.internal_disks
 
         if @state != VM_STATE[:active]
 
             @used_cpu    = 0
             @used_memory = 0
             @netrx       = 0
-            @nettx       = 0
+            @nettx       = 0            
             return
         end
 
@@ -467,13 +479,7 @@ class VCloudVm
 
         # Check for negative values
         @used_memory     = 0 if @used_memory.to_i < 0
-        @used_cpu        = 0 if @used_cpu.to_i < 0
-      
-        @guest_ip_addresses        = @vm.ip_address.nil? ? "--" : @vm.ip_address       
-
-        @os                        = @vm.operating_system.delete(' ')
-        @vmtools_ver               = @vm.vmtools_version
-        @disks                     = @vm.internal_disks
+        @used_cpu        = 0 if @used_cpu.to_i < 0          
 
     end
 
@@ -577,7 +583,7 @@ class VCloudVm
                 connection  = VCDConnection.new(hid)
                 if connection.vapp_exists?(name)
                     vapp        = connection.find_vapp_by_name(name) 
-                    vapp.delete
+                    #vapp.delete
                 end
     end
 
@@ -785,9 +791,10 @@ class VCloudVm
         end
     end
 
-    def self.vm_to_one(vm)
+    def self.vm_to_one(vm,id)
         xml = ""
-        xml << "<VM>\n"      
+        xml << "<VM>\n"
+        xml << "<ID>#{id}</ID>"      
         xml << "</VM>\n"
         
     end
@@ -833,7 +840,9 @@ class VCloudVm
         str <<  "  NETWORK = \"YES\",\n"   
         str <<  "  SSH_PUBLIC_KEY = \"$USER[SSH_PUBLIC_KEY]\",\n"  if operating_system == "LINUX"    
         str <<  "  OS = \"#{operating_system}\"\n"
-        str <<  "]\n"                 
+        str <<  "]\n" 
+
+        str << "STORAGE_PROFILE=\"DEFAULT\"\n"               
 
         if template.description.empty?
             str << "DESCRIPTION = \"vCloud Template imported by OpenNebula"\
@@ -890,8 +899,13 @@ class VCloudVm
             sp_link             = nil 
             disk_conf           = nil
 
-            if !storage_profile.nil? and connection.vdc_ci.storage_profile_exists?(storage_profile)
-                sp_link         = connection.vdc_ci.find_storage_profile_by_name(storage_profile).href  
+            if !storage_profile.nil? and (storage_profile == "DEFAULT" or connection.vdc_ci.storage_profile_exists?(storage_profile))
+                if storage_profile == "DEFAULT"
+                    sp              = connection.vdc_ci.default_storage_profile
+                    sp_link         = connection.vdc_ci.find_storage_profile_by_name(sp).href
+                else
+                    sp_link         = connection.vdc_ci.find_storage_profile_by_name(storage_profile).href  
+                end
             end                     
 
             if !disks.nil?         
@@ -903,19 +917,17 @@ class VCloudVm
             end
 
             vm_params = {
-               :disk_opt => nil,       
+               :disk_opt => disk_conf,       
                :storage_profile => sp_link
             }                                 
- 
-            vapp = catalog.instantiate_vapp_template(template.name,vdc_name,vApp_name,vApp_description,nil,nil,vm_params)
             
+            vapp = catalog.instantiate_vapp_template_by_id(template_id,vdc_name,vApp_name,vApp_description,nil,nil,vm_params)
+
         rescue Exception => e
-            raise "Cannot clone vApp Template #{e.message}"
+            raise "Cannot instantiate vApp Template #{e.message}"
         end
-        
-
-
-        reconfigure_vm(vapp, xml, true, hostname,connection)
+       
+        reconfigure_vm(vapp, xml, true, hostname, connection)
    
         vapp.power_on 
 
@@ -970,10 +982,13 @@ class VCloudVm
         if !nics.nil?
             nics.each { |nic|
         
-                ip_add = nic.elements["IP"].nil? ? nil : nic.elements["IP"].text
+                ip_add      = nic.elements["IP"].nil? ? nil : nic.elements["IP"].text
+                net_name    = nic.elements["NETWORK"].text
+                net_id      = VCDConnection::get_id_network(net_name)
 
                 nic_opt = {
-                        :network_name =>  nic.elements["NETWORK"].text,
+                        :network_name =>  net_name,
+                        :network_id   =>  net_id,
                         :ip           =>  ip_add,
                         :mac          =>  nic.elements["MAC"].text
                 }
@@ -1012,8 +1027,7 @@ class VCloudVm
     ###################################################################################################
     # Reconfigures a vApp with new deployment description
     ###################################################################################################
-    def self.reconfigure_vm(vapp, xml, newvm, hostname,connection=nil)
-        vm                  = vapp.vms.first
+    def self.reconfigure_vm(vapp, xml, newvm, hostname,connection=nil)       
 
         ports               = xml.root.elements["/VM/TEMPLATE/CONTEXT/WHITE_TCP_PORTS"]
         ports               = ports.text.split(',') if !ports.nil?
@@ -1026,6 +1040,8 @@ class VCloudVm
         end
 
         if newvm
+            vapp.delete_all_networks  #If the template has defined vapp networks, we need to delete all, and define the new networks    
+            vm                  = vapp.vms.first
             #CUSTOMIZATION SECTION
             customization      = xml.root.elements["/VM/TEMPLATE/CONTEXT/CUSTOMIZATION"].text if !xml.root.elements["/VM/TEMPLATE/CONTEXT/CUSTOMIZATION"].nil?
             os                 = xml.root.elements["/VM/TEMPLATE/CONTEXT/OS"].text.downcase if !xml.root.elements["/VM/TEMPLATE/CONTEXT/OS"].nil?
@@ -1051,9 +1067,10 @@ class VCloudVm
             end                
         end
 
-        #RECONFIGURE SECTION        
+        #RECONFIGURE SECTION            
         options_vm = hash_spec_vm(xml)
-        
+
+        vm         = vapp.vms.first
         vm.reconfigure(options_vm)            
     end
 
@@ -1107,9 +1124,9 @@ class VCloudVm
             script << "  echo \"Do Nothing\"\n"
             script << "elif [ $1 == 'postcustomization' ]; then\n"
             if !password.nil?
-                script << "  useradd -p \'#{password}\' -s /bin/bash -m #{username}\n"
+                script << "  useradd -p \'#{password}\' -s /bin/bash -m -U #{username}\n"
             else
-                script << "  useradd -s /bin/bash -m #{username}\n"  
+                script << "  useradd -s /bin/bash -m -U #{username}\n"  
             end
             if !user_pubkey.nil?
                 script << "  mkdir -p /home/#{username}/.ssh\n"
@@ -1159,7 +1176,7 @@ class VCloudVm
             when 'POWERED_ON'
                 VM_STATE[:active]
             when 'SUSPENDED'
-                VM_STATE[:suspended]
+                VM_STATE[:paused]
             when 'POWERED_OFF'
                 VM_STATE[:deleted]
             else

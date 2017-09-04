@@ -175,7 +175,7 @@ end
 
             STDOUT.print "Looking for vApp Templates..."
 
-            rs = connection.vcd_connection.catalogs;               
+            rs = connection.vcd_connection.catalogs;                       
 
             STDOUT.print "done!\n"
 
@@ -198,7 +198,7 @@ end
                     catalog.items.each{ |catalog_item|
                         if catalog_item.type.include? "vAppTemplate"                        
                             
-                            str = VCloudDriver::VCloudVm.to_one(catalog_item,catalog.name)
+                            str = VCloudDriver::VCloudVm.to_one(catalog_item,catalog.name)                                                    
 
                             one_t = ::OpenNebula::Template.new(
                                     ::OpenNebula::Template.build_xml,connection.one)
@@ -535,7 +535,9 @@ end
                     if !vapp.name.start_with?("one-")
                          STDOUT.print "\nDo you want to import vApp #{vapp.name} [y/n]? "
 
-                         next if STDIN.gets.strip.downcase != 'y'                     
+                         next if STDIN.gets.strip.downcase != 'y'
+                         #NOT IMPLEMENTED YET
+                         #xml = VCloudDriver::VCloudVm.vm_to_one(vapp)
                     end
                 end
                 STDOUT.print "done!\n"
